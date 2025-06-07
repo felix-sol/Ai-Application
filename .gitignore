@@ -1,0 +1,17 @@
+# Python-spezifische Dateien/Ordner
+__pycache__/
+*.pyc
+*.ipynb_checkpoints/
+.mypy_cache/
+
+# Virtuelle Umgebungen
+venv/
+.venv/
+env/
+
+# Umgebungsvariablen-Datei (sehr wichtig!)
+.env
+
+# Spezifische IDE-Dateien (optional, aber empfohlen)
+.vscode/
+.idea/
