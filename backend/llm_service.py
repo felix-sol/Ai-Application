@@ -58,22 +58,29 @@ def get_llm_response(user_question: str, system_prompt: str = "You are a helpful
 
 # Dieser Block wird nur ausgeführt, wenn die Datei direkt gestartet wird (nicht, wenn sie importiert wird)
 if __name__ == "__main__":
-    print("Teste LLM-Antwort ohne Kontext...")
-    response = get_llm_response(
-        user_question="Wie hoch ist der Eiffelturm?",
-        system_prompt="Du bist ein hilfreicher Assistent."
+    print("--- Experiment 1: Einfache Frage ---")
+    response_exp1 = get_llm_response(
+        user_question="Was ist die Hauptstadt von Frankreich?",
+        system_prompt="Du bist ein Geographie-Experte."
     )
-    print(f"LLM Antwort: {response}")
+    print(f"LLM Antwort: {response_exp1}")
 
-    print("\nTeste LLM-Antwort mit simuliertem Kontext (RAG-Muster)...")
-    simulated_context = (
-        "Der Eiffelturm ist ein 330 Meter hoher Eisenfachwerkturm in Paris, Frankreich. "
-        "Er wurde von Gustave Eiffel für die Weltausstellung 1889 erbaut. "
-        "Ursprünglich war er 312 Meter hoch, aber durch das Hinzufügen einer Antenne erreichte er seine heutige Höhe."
+    print("\n--- Experiment 2: Andere Rolle ---")
+    response_exp2 = get_llm_response(
+        user_question="Erzähl mir einen kurzen Witz.",
+        system_prompt="Du bist ein Comedian."
     )
-    response_rag = get_llm_response(
-        user_question="Wer hat den Eiffelturm gebaut und wie hoch ist er?",
-        system_prompt="Du bist ein präziser Fakten-Extraktor aus den bereitgestellten Informationen.",
-        context=simulated_context
+    print(f"LLM Antwort: {response_exp2}")
+
+    print("\n--- Experiment 3: RAG mit neuem Kontext ---")
+    mein_neuer_kontext = (
+        "Die Firma GreenSolutions hat im letzten Jahr ihre CO2-Emissionen um 15% gesenkt. "
+        "Sie haben 2023 insgesamt 500 Tonnen CO2 ausgestoßen. "
+        "Ihr Ziel für 2024 ist eine weitere Reduktion um 10% durch den Einsatz erneuerbarer Energien."
     )
-    print(f"LLM Antwort (mit Kontext): {response_rag}")
+    response_exp3 = get_llm_response(
+        user_question="Wie viel CO2 hat GreenSolutions 2023 ausgestoßen und was ist ihr Ziel für 2024?",
+        system_prompt="Du bist ein Analyst für Nachhaltigkeitsberichte und fasst Fakten prägnant zusammen.",
+        context=mein_neuer_kontext
+    )
+    print(f"LLM Antwort: {response_exp3}")
