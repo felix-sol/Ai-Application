@@ -1,0 +1,25 @@
+.header {
+  position: relative; /* Damit z-index greift */
+  z-index: 2; /* Höher als die content-box */
+  height: 100px;
+  background-color: #333;
+  color: rgb(248, 247, 243);
+  padding-top: 28px;
+  text-align: center;
+  box-shadow:  0 12px 32px 10px rgba(230, 225, 225, 0.315);
+  ;
+}
+
+.chatPageHeader {
+  display: flex;
+  justify-content: space-between;
+  position: relative; /* Damit z-index greift */
+  z-index: 2; /* Höher als die content-box */
+  height: 70px;
+  background-color: #333;
+  color: rgb(248, 247, 243);
+  padding-top: 16px;
+  text-align: left;
+  box-shadow:  0 12px 32px 10px rgba(230, 225, 225, 0.315);
+  padding-left: 20px;
+}
