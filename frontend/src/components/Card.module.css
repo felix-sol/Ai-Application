@@ -1,0 +1,56 @@
+.card {
+  position: absolute;
+  bottom: 0;
+  background-color: rgb(248, 247, 243);
+  padding: 0px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(124, 195, 236, 0.1);
+  width: auto;
+  height: auto;
+  overflow: visible;
+  
+  animation: rocketMove 12s linear infinite;
+
+  /* Hintergrund-Ebene */
+  z-index: 0; /* Niedrigster Wert – ganz hinten */
+}
+
+@keyframes rocketMove {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-100vh); /* Fliegt aus dem Bildschirm */
+  }
+}
+
+.card img {
+  max-width: 500px;   /* Optional: Bild passt sich an die Card an */
+  height: auto;      /* Verhältnis bleibt erhalten */
+  display: block;    /* Entfernt kleine Lücken bei inline-Elementen */
+  margin: 0px ;
+  padding: 0px;   
+  border-radius: 10px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+}
+.card h2 {
+  font-size: 1.5em;
+  font-family: arial,sans-serif;
+
+  margin: 10px 0;
+  text-align: center;
+}
+
+.card p {
+  font-family: arial,sans-serif;
+  padding: 0 10px;
+  text-align: center;
+  color: #333;
+}
+.card .names{
+  font-family: arial,sans-serif;
+  display: inline-block;
+  margin-top: 10px;
+  padding: 10px
+}
