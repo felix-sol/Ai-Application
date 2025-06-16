@@ -1,3 +1,6 @@
+# Testskript für Backend-Logik. Später vielleicht löschen wenn alles über app.py
+
+
 import os
 from llm_service import get_llm_response # LLM-Service Funktion
 from pdf_processing import read_pdf, split_text_into_sections # PDF-Funktionen
