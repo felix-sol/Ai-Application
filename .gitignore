@@ -15,3 +15,6 @@ env/
 # Spezifische IDE-Dateien (optional, aber empfohlen)
 .vscode/
 .idea/
+
+# Uploads (wie dein uploaded_pdfs)
+backend/uploaded_pdfs/
