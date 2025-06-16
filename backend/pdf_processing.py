@@ -1,5 +1,5 @@
 from PyPDF2 import PdfReader
-from langchain.text_splitter import RecursiveCharacterTextSplitter # NEUER IMPORT
+from langchain.text_splitter import RecursiveCharacterTextSplitter 
 
 def read_pdf(file_path: str) -> str:
     """
@@ -21,7 +21,7 @@ def split_text_into_sections(text: str) -> list[str]:
     Verwendet LangChain's RecursiveCharacterTextSplitter.
     """
     # Diese Parameter sind wichtig für die Qualität des Retrieval.
-    # Experimentiere mit chunk_size und chunk_overlap für beste Ergebnisse basierend auf deinem Dokumententyp.
+    # Experimentieren mit chunk_size und chunk_overlap für beste Ergebnisse basierend auf dem Dokumententyp.
     # chunk_size: Maximale Größe jedes Chunks (in Zeichen)
     # chunk_overlap: Anzahl der Zeichen, die sich zwischen benachbarten Chunks überlappen
     text_splitter = RecursiveCharacterTextSplitter(
@@ -35,7 +35,7 @@ def split_text_into_sections(text: str) -> list[str]:
     print(f"Text in {len(chunks)} Chunks aufgeteilt.")
     return chunks
 
-# --- Du kannst den __main__ Block für eigenständige Tests beibehalten, falls vorhanden ---
+# --- Können den __main__ Block für eigenständige Tests beibehalten, falls vorhanden ---
 # Zum Beispiel zum Testen, wie das Splitting funktioniert
 # if __name__ == "__main__":
 #     import os

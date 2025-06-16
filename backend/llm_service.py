@@ -3,7 +3,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 # Lade Umgebungsvariablen aus der .env-Datei.
-# Dies sollte einmal am Start deines Programms (oder im Backend-Framework) aufgerufen werden.
+# Dies sollte einmal am Start des Programms aufgerufen werden.
 # Für Tests in dieser Datei kann es hier stehen bleiben.
 load_dotenv()
 
@@ -25,7 +25,7 @@ def get_llm_response(user_question: str, system_prompt: str = "You are a helpful
     api_key = os.getenv("GWDG_LLM_API_KEY")
     if not api_key:
         print("Fehler: GWDG_LLM_API_KEY Umgebungsvariable nicht gesetzt!")
-        # Im echten Backend würde man hier eine HTTP-Fehlerantwort zurückgeben
+        # Im echten Backend hier eine HTTP-Fehlerantwort zurückgeben
         raise ValueError("API-Schlüssel für LLM-Dienst fehlt. Bitte GWDG_LLM_API_KEY Umgebungsvariable setzen.")
 
     client = OpenAI(
@@ -38,7 +38,7 @@ def get_llm_response(user_question: str, system_prompt: str = "You are a helpful
         {"role": "system", "content": system_prompt}
     ]
 
-    # Wenn Kontext vorhanden ist, fügen wir ihn in den User-Prompt ein (RAG-Muster)
+    # Wenn Kontext vorhanden ist, ihn in den User-Prompt einfügen (RAG-Muster)
     if context:
         messages.append({"role": "user", "content": f"Basierend auf dem folgenden Textabschnitt:\n\n{context}\n\nAntworte auf die Frage: {user_question}"})
     else:

@@ -2,9 +2,9 @@ from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 import os
 import uuid
-from flask_cors import CORS # Wichtig für Frontend-Kommunikation
+from flask_cors import CORS # Für Frontend-Kommunikation
 
-# Importiere deine bereits erstellten Logik-Module
+# Importiere bereits erstellten Logik-Module
 from pdf_processing import read_pdf, split_text_into_sections
 from llm_service import get_llm_response
 
@@ -32,9 +32,8 @@ os.makedirs(VECTOR_DB_DIR, exist_ok=True)
 MAX_CONTEXT_CHAR_LIMIT = 28000 
 
 # --- Initialisiere den Embedding-Service global ---
-# Stelle sicher, dass dein OPENAI_API_KEY in deiner .env Datei gesetzt ist!
-# Wenn du ein GWDG-Modell mit OpenAI-Kompatibilität nutzt, kannst du hier auch
-# eine 'base_url' angeben. Beispiel:
+# Wenn ein GWDG-Modell mit OpenAI-Kompatibilität nutzen will, kann hier auch
+# eine 'base_url' angegeben werdeb. Beispiel:
 # embeddings = OpenAIEmbeddings(model="text-embedding-ada-002", openai_api_base="https://api.gwdg.de/...")
 embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
 
@@ -56,7 +55,7 @@ def get_or_create_vector_store(pdf_id: str, text_chunks: list[str] = None):
             embedding_function=embeddings,
             collection_name=pdf_id
         )
-        # Eine kleine Abfrage, um zu prüfen, ob die Sammlung wirklich Daten enthält
+        # Abfrage, um zu prüfen, ob die Sammlung wirklich Daten enthält
         if vector_store._collection.count() > 0:
             vector_stores_cache[pdf_id] = vector_store
             print(f"ChromaDB collection '{pdf_id}' von Festplatte geladen.")
@@ -122,7 +121,7 @@ def upload_pdf():
                 print("Error: No text chunks generated from PDF.")
                 return jsonify({"error": "Could not process PDF content into usable chunks."}), 500
 
-            # NEU: Erstelle oder lade den Vector Store für diese PDF
+            # Erstelle oder lade den Vector Store für diese PDF
             try:
                 vector_store = get_or_create_vector_store(unique_filename, text_chunks)
                 print(f"PDF content embedded and stored in ChromaDB collection '{unique_filename}' with {len(text_chunks)} chunks.")
@@ -138,7 +137,7 @@ def upload_pdf():
             }), 200
         except Exception as e:
             print(f"Error processing PDF upload: {e}")
-            # Füge hier auch spezifischere Fehlerbehandlung hinzu, z.B. für API-Fehler bei Embeddings
+            # Hier auch spezifischere Fehlerbehandlung hinzufügen, z.B. für API-Fehler bei Embeddings
             return jsonify({"error": f"Server error during PDF processing: {str(e)}"}), 500
 
 @app.route('/chat', methods=['POST'])
@@ -161,9 +160,9 @@ def chat_with_pdf():
 
     print(f"Verarbeite Chat-Anfrage für PDF '{pdf_id}' mit Frage '{user_question}'")
 
-    # NEU: Relevante Chunks aus der Vektordatenbank abrufen
+    # Relevante Chunks aus der Vektordatenbank abrufen
     # 'k' ist die Anzahl der relevantesten Chunks, die abgerufen werden sollen.
-    # Experimentiere mit diesem Wert für optimale Ergebnisse.
+    # Experimentieren mit diesem Wert für optimale Ergebnisse.
     retrieved_docs = vector_store.similarity_search(user_question, k=5)
 
     context_for_llm = "\n\n".join([doc.page_content for doc in retrieved_docs])
