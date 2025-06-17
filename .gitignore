@@ -18,3 +18,5 @@ env/
 
 # Uploads (wie dein uploaded_pdfs)
 backend/uploaded_pdfs/
+
+backend/chroma_db_data/
