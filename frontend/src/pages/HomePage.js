@@ -21,7 +21,7 @@ function HomePage() {
     formData.append('pdf_file', file);
 
     try {
-      const response = await fetch('http://localhost:5001/upload_pdf', {  // Backend URL und Port anpassen!
+      const response = await fetch('http://localhost:5000/upload_pdf', {  // Backend URL und Port anpassen!
         method: 'POST',
         body: formData,
       });
@@ -31,7 +31,7 @@ function HomePage() {
       if (response.ok) {
         console.log('Upload erfolgreich:', data);
         // Navigiere weiter zur Chat-Seite und gib pdf_id weiter
-        navigate('/chat', { state: { pdfId: data.pdf_id, pdfName: file.name } });
+        navigate('/chat', { state: { pdfName: data.pdf_id } });
       } else {
         alert('Upload fehlgeschlagen: ' + data.error);
       }
