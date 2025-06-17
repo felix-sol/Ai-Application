@@ -26,7 +26,7 @@ function ChatPage() {
   setMessages(prev => [...prev, userMessage]);
 
   try {
-    const response = await fetch('http://localhost:5001/chat', {   // Backend URL anpassen
+    const response = await fetch('http://localhost:5000/chat', {   // Backend URL anpassen
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',   // Wichtig!
