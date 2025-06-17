@@ -18,20 +18,43 @@ function ChatPage() {
   // nutzen wir einen Standardtext als Rückfalloption.
   const pdfName = location.state?.pdfName || 'PDF-Chat';
 
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (input.trim() === '') return;
+  const handleSendMessage = async (e) => {
+  e.preventDefault();
+  if (input.trim() === '') return;
 
-    const userMessage = { text: input, sender: 'user' };
-    setMessages(prev => [...prev, userMessage]);
+  const userMessage = { text: input, sender: 'user' };
+  setMessages(prev => [...prev, userMessage]);
 
-    setTimeout(() => {
-      const botResponse = { text: `Antwort auf: "${input}"`, sender: 'bot' };
+  try {
+    const response = await fetch('http://localhost:5001/chat', {   // Backend URL anpassen
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',   // Wichtig!
+      },
+      body: JSON.stringify({
+        question: input,      // hier kommt die Frage rein
+        pdf_id: pdfName,        // hier die ID deiner PDF (aus Upload oder State)
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      const botResponse = { text: data.answer, sender: 'bot' };
       setMessages(prev => [...prev, botResponse]);
-    }, 1000);
+    } else {
+      const botResponse = { text: data.error || "Fehler beim Chatten.", sender: 'bot' };
+      setMessages(prev => [...prev, botResponse]);
+    }
+  } catch (error) {
+    const botResponse = { text: 'Netzwerkfehler: ' + error.message, sender: 'bot' };
+    setMessages(prev => [...prev, botResponse]);
+  }
 
-    setInput('');
-  };
+  setInput('');
+};
+
+
 
   const handleExtractAndDownload = () => {
     const jsonResult = {

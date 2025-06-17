@@ -14,19 +14,35 @@ import cardStyles from '../components/Card.module.css';
 function HomePage() {
   const navigate = useNavigate();
  
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file && file.type === 'application/pdf') {
-      const fileName = file.name;
-      console.log('PDF ausgewählt:', fileName);
+  const handleFileChange = async (event) => {
+  const file = event.target.files[0];
+  if (file && file.type === 'application/pdf') {
+    const formData = new FormData();
+    formData.append('pdf_file', file);
 
-      
-      navigate('/chat', { state: { pdfName: fileName } });
+    try {
+      const response = await fetch('http://localhost:5001/upload_pdf', {  // Backend URL und Port anpassen!
+        method: 'POST',
+        body: formData,
+      });
 
-    } else {
-      alert('Bitte wählen Sie eine gültige PDF-Datei aus.');
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('Upload erfolgreich:', data);
+        // Navigiere weiter zur Chat-Seite und gib pdf_id weiter
+        navigate('/chat', { state: { pdfId: data.pdf_id, pdfName: file.name } });
+      } else {
+        alert('Upload fehlgeschlagen: ' + data.error);
+      }
+    } catch (error) {
+      alert('Fehler beim Upload: ' + error.message);
     }
-  };
+  } else {
+    alert('Bitte wählen Sie eine gültige PDF-Datei aus.');
+  }
+};
+
 
 return (
   <>
