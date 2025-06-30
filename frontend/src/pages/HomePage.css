@@ -8,7 +8,7 @@
 
 .home-container {
   width: 100%;
-  min-height: calc(100vh - 180px); /* Beispiel: calc(100vh - 150px); */
+   min-height: calc(100vh - 180px);   /* Beispiel: calc(100vh - 150px); */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -20,49 +20,60 @@
   background-repeat: no-repeat;
 }
 
-
 .content-box {
-  padding-top: 135px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0.3em;
   text-align: center;
-  
+  box-sizing: border-box;
   background-color: #333;
   border-radius: 12px;
   box-shadow:
-    0 -12px 32px 10px rgba(209, 15, 15, 0.205), /* Scharfe Umrandung */
+    0 -12px 32px 10px rgba(209, 15, 15, 0.205),
     0 12px 32px 10px rgba(230, 225, 225, 0.4);
-  width: 500px;
-  height: 500px;
-  position: relative; /* Position muss gesetzt sein, damit z-index greift */
+  /* Skaliert proportional zur Viewport-Größe */
+  width: clamp(15rem, 20vw, 30rem);
+  height: clamp(13rem, 18vh, 25rem);
+  position: relative;
   z-index: 1;
 }
 
 .content-box h1 {
   font-family: arial,sans-serif;
+  font-size: clamp(1.2rem, 1.5vw, 1.7rem);
   color: rgb(248, 247, 243);
-  margin-bottom: 15px;
+  margin-bottom: 0.1em;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .content-box p {
-  font-family: arial,sans-serif;
+  font-family: Arial, sans-serif;
   color: rgb(248, 247, 243);
-  margin-bottom: 70px;
-  margin-top: 25px;
-  font-size: 23px;
+  font-size: clamp(0.7rem, 1vw, 1.2rem);
   line-height: 1.6;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-.upload-button {
-  background-color: rgb(248, 247, 243);
-  color: #333;
-  padding: 12px 25px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 20px;
-  font-family:arial,sans-serif;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-}
+  .upload-button {
+    background-color: rgb(248, 247, 243);
+    color: #333;
+    padding: 12px 25px;
+    margin-top: 1em;
+    margin-bottom: 0.7em;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: clamp(0.5rem, 1.5vw, 1.1rem);
+    font-family:arial,sans-serif;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    max-width: 100%;
+  }
 
 .upload-button:hover {
   background-color: #689bd1;

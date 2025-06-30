@@ -1,18 +1,33 @@
 .footer {
   position: relative;
   z-index: 2;
-  height: 80px;
+  height: 65px;
   background-color: #333;
   color: rgb(248, 247, 243);
-  padding: 20px;
+  padding: 12px;
   text-align: center;
   box-shadow: 0 12px 32px 10px rgba(230, 225, 225, 0.849);
 }
 
+
+.footer h4 {
+  font-size: clamp(0.6rem, 0.8vw, 1.1rem);
+  font-family: Arial, sans-serif;
+  margin: 0;
+}
+.footer p {
+  margin: 0;
+  font-size: clamp(0.6rem, 0.8vw, 1.1rem);
+  font-family: Arial, sans-serif;
+}
 .footer a {
   color: rgb(248, 247, 243);
   text-decoration: underline;
+  font-style: arial, sans-serif;
+  font-size: clamp(0.6rem, 0.8vw, 1.1rem);
 }
+
+
 .chatPageFooter {
   position: relative;
   z-index: 2;
@@ -24,7 +39,21 @@
   box-shadow: 0 12px 32px 10px rgba(230, 225, 225, 0.849);
   padding-left: 20px;
 }
+
+
+.chatPageFooter h4 {
+  font-size: clamp(0.6rem, 0.8vw, 0.9rem);
+  font-family: Arial, sans-serif;
+  margin: 0;
+}
+.chatPageFooter p {
+  margin: 0;
+  font-size: clamp(0.6rem, 0.8vw, 0.9rem);
+  font-family: Arial, sans-serif;
+}
 .chatPageFooter a {
   color: rgb(248, 247, 243);
   text-decoration: underline;
+  font-style: arial, sans-serif;
+   font-size: clamp(0.5rem, 0.7vw, 0.8rem);
 }

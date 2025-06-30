@@ -2,17 +2,17 @@
   position: absolute;
   bottom: 0;
   background-color: rgb(248, 247, 243);
-  padding: 0px;
+  padding: 0;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(124, 195, 236, 0.1);
-  width: auto;
+  width: clamp(15rem, 20vw, 30rem);
+  max-width: 90vw;
   height: auto;
-  overflow: visible;
-  
+  max-height: 90vh;
+  overflow: hidden; /* verhindert Bildüberlauf */
+  box-sizing: border-box;
+  z-index: 0;
   animation: rocketMove 12s linear infinite;
-
-  /* Hintergrund-Ebene */
-  z-index: 0; /* Niedrigster Wert – ganz hinten */
 }
 
 @keyframes rocketMove {
@@ -25,32 +25,37 @@
 }
 
 .card img {
-  max-width: 500px;   /* Optional: Bild passt sich an die Card an */
-  height: auto;      /* Verhältnis bleibt erhalten */
-  display: block;    /* Entfernt kleine Lücken bei inline-Elementen */
-  margin: 0px ;
-  padding: 0px;   
-  border-radius: 10px;
-  border-bottom-left-radius: 0px;
-  border-bottom-right-radius: 0px;
+  width: 100%;         
+  height: auto;        /* Bewahrt Seitenverhältnis */
+  display: block;
+  margin: 0;
+  padding: 0;
+  border-radius: 10px 10px 0 0;
+  box-sizing: border-box;
 }
-.card h2 {
-  font-size: 1.5em;
-  font-family: arial,sans-serif;
 
-  margin: 10px 0;
+.card h2 {
+  font-size: clamp(1.1rem, 0.9vw, 1.3rem);
+  font-family: Arial, sans-serif;
+  margin-top: 0.3em;
+  margin-bottom: 0.1em;
   text-align: center;
 }
+
+ 
 
 .card p {
-  font-family: arial,sans-serif;
-  padding: 0 10px;
+  font-family: Arial, sans-serif;
+  font-size: clamp(0.7rem, 0.8vw, 1rem);
   text-align: center;
   color: #333;
+  margin: 0.1em ;
 }
-.card .names{
-  font-family: arial,sans-serif;
+
+.card .names {
+  font-family: Arial, sans-serif;
+  font-size: clamp(0.7rem, 0.8vw, 1rem);
   display: inline-block;
-  margin-top: 10px;
-  padding: 10px
+  margin-top: 0.1em;
+  padding-bottom: 3px;
 }
