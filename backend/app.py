@@ -3,14 +3,10 @@ from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 import os
 import uuid
-from flask_cors import CORS  # Für Frontend-Kommunikation
+from flask_cors import CORS 
 from pdf_processing import read_pdf, split_text_into_sections
 from llm_service import get_llm_response
-
-# NEUE IMPORTE FÜR EMBEDDINGS UND VECTOR STORE
-
 from langchain_community.vectorstores import Chroma
-from langchain.chains import RetrievalQA  # Optional: Später für komplexere RAG Chains
 from embeddingWrapper import SAIAEmbeddings
 
 
@@ -26,7 +22,7 @@ os.makedirs(VECTOR_DB_DIR, exist_ok=True)
 
 MAX_CONTEXT_CHAR_LIMIT = 28000
 
-# Initialisiere den Embedding-Service (korrekt)
+# Initialisiere den Embedding-Service
 
 load_dotenv()
 api_key = os.getenv("SAIA_API_KEY")  
@@ -66,7 +62,7 @@ def get_or_create_vector_store(pdf_id: str, text_chunks: list[str] = None):
                 print(f"Erstelle neue ChromaDB collection '{pdf_id}'.")
                 vector_store = Chroma.from_texts(
                     texts=text_chunks,
-                    embedding=embeddings,  # ✅ korrekt: 'embedding' statt 'embedding_function'
+                    embedding=embeddings,  
                     collection_name=pdf_id,
                     persist_directory=VECTOR_DB_DIR
                 )
