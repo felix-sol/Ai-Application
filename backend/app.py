@@ -8,7 +8,8 @@ from pdf_processing import read_pdf, split_text_into_sections
 from llm_service import get_llm_response
 from langchain_community.vectorstores import Chroma
 from embeddingWrapper import SAIAEmbeddings
-
+import shutil
+import chromadb
 
 
 app = Flask(__name__)
@@ -20,12 +21,14 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 VECTOR_DB_DIR = "chroma_db_data"
 os.makedirs(VECTOR_DB_DIR, exist_ok=True)
 
+JSON_OUTPUT_FOLDER = 'extracted_jsons'
+os.makedirs(JSON_OUTPUT_FOLDER, exist_ok=True)
+
 MAX_CONTEXT_CHAR_LIMIT = 28000
 
-# Initialisiere den Embedding-Service
 
 load_dotenv()
-api_key = os.getenv("SAIA_API_KEY")  
+api_key = os.getenv("SAIA_API_KEY")
 
 if not api_key:
     raise ValueError("API Key nicht gefunden! Bitte in .env setzen.")
@@ -62,7 +65,7 @@ def get_or_create_vector_store(pdf_id: str, text_chunks: list[str] = None):
                 print(f"Erstelle neue ChromaDB collection '{pdf_id}'.")
                 vector_store = Chroma.from_texts(
                     texts=text_chunks,
-                    embedding=embeddings,  
+                    embedding=embeddings, 
                     collection_name=pdf_id,
                     persist_directory=VECTOR_DB_DIR
                 )
@@ -170,6 +173,87 @@ def chat_with_pdf():
         print(f"Fehler bei der Kommunikation mit dem KI-Modell: {e}")
         traceback.print_exc()
         return jsonify({"error": f"Fehler bei der Kommunikation mit dem KI-Modell: {str(e)}"}), 500
+    
+# PDF und zugehörige ChromaDB-Sammlung löschen:
+@app.route('/delete_pdf/<pdf_id>', methods=['DELETE'])
+def delete_pdf(pdf_id):
+    print(f"Received delete request for PDF ID: {pdf_id}")
+
+    pdf_file_path = os.path.join(UPLOAD_FOLDER, pdf_id) # Pfad zur PDF Datei
+    chroma_collection_path = os.path.join(VECTOR_DB_DIR, pdf_id) # Pfad zur ChromeDB Datenbank
+    json_file_path = os.path.join(JSON_OUTPUT_FOLDER, f"{pdf_id}.json") # Pfad zur JSON Datei (Implementiert Marcel erst ja noch)
+
+    deleted_items = []
+    errors = []
+
+    # PDF-Datei löschen:
+    if os.path.exists(pdf_file_path):
+        try:
+            os.remove(pdf_file_path)
+            deleted_items.append(f"PDF-Datei '{pdf_id}'")
+            print(f"PDF-Datei '{pdf_file_path}' erfolgreich gelöscht.")
+        except Exception as e:
+            errors.append(f"Fehler beim Löschen der PDF-Datei '{pdf_id}': {e}")
+            print(f"Fehler beim Löschen der PDF-Datei '{pdf_file_path}': {e}")
+            traceback.print_exc()
+    else:
+        print(f"PDF-Datei '{pdf_id}' nicht gefunden zum Löschen.")
+
+    # ChromaDB Inhalt löschen:
+    # Aus dem aktiven Cache:
+    if pdf_id in vector_stores_cache:
+        try:
+            del vector_stores_cache[pdf_id]
+            print(f"ChromaDB-Sammlung '{pdf_id}' aus Cache entfernt.")
+        except Exception as e:
+            errors.append(f"Fehler beim Entfernen der ChromaDB-Sammlung '{pdf_id}' aus dem Cache: {e}")
+            print(f"Fehler beim Entfernen der ChromaDB-Sammlung '{pdf_id}' aus dem Cache: {e}")
+            traceback.print_exc()
+
+    try:
+        if os.path.exists(VECTOR_DB_DIR):
+            client = chromadb.PersistentClient(path=VECTOR_DB_DIR)
+
+            try:
+                client.delete_collection(name=pdf_id)
+                deleted_items.append(f"ChromaDB-Sammlung '{pdf_id}'")
+                print(f"ChromaDB-Sammlung '{pdf_id}' erfolgreich über ChromaDB Client gelöscht.")
+            except Exception as e:
+                if "does not exist" in str(e).lower():
+                    print(f"ChromaDB-Sammlung '{pdf_id}' existierte nicht zum Löschen (oder wurde bereits gelöscht).")
+                else:
+                    errors.append(f"Fehler beim Löschen der ChromaDB-Sammlung '{pdf_id}' über Client: {e}")
+                    print(f"Fehler beim Löschen der ChromaDB-Sammlung '{pdf_id}' über Client: {e}")
+                    traceback.print_exc()
+        else:
+            print(f"ChromaDB Hauptverzeichnis '{VECTOR_DB_DIR}' existiert nicht. Keine Sammlungen zu löschen.")
+
+    except Exception as e:
+        errors.append(f"Allgemeiner Fehler bei der ChromaDB-Sammlung-Löschung für '{pdf_id}': {e}")
+        print(f"Allgemeiner Fehler bei der ChromaDB-Sammlung-Löschung für '{pdf_id}': {e}")
+        traceback.print_exc()
+
+
+    # JSON-Datei löschen (falls überhaupt vorhanden):
+    if os.path.exists(json_file_path):
+        try:
+            os.remove(json_file_path)
+            deleted_items.append(f"JSON-Datei '{pdf_id}.json'")
+            print(f"JSON-Datei '{json_file_path}' erfolgreich gelöscht.")
+        except Exception as e:
+            errors.append(f"Fehler beim Löschen der JSON-Datei '{pdf_id}.json': {e}")
+            print(f"Fehler beim Löschen der JSON-Datei '{json_file_path}': {e}")
+            traceback.print_exc()
+    else:
+        print(f"JSON-Datei '{pdf_id}.json' nicht gefunden zum Löschen.")
+
+
+    if errors:
+        return jsonify({"message": "Löschvorgang abgeschlossen, aber mit Fehlern.", "deleted": deleted_items, "errors": errors}), 500
+    elif not deleted_items:
+        return jsonify({"message": f"Keine Ressourcen für PDF ID '{pdf_id}' gefunden zum Löschen."}), 404
+    else:
+        return jsonify({"message": f"Ressourcen für PDF ID '{pdf_id}' erfolgreich gelöscht.", "deleted": deleted_items}), 200
 
 if __name__ == '__main__':
     print("Starting Flask backend server...")
