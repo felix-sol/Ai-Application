@@ -254,15 +254,99 @@ def delete_pdf(pdf_id):
         return jsonify({"message": f"Keine Ressourcen für PDF ID '{pdf_id}' gefunden zum Löschen."}), 404
     else:
         return jsonify({"message": f"Ressourcen für PDF ID '{pdf_id}' erfolgreich gelöscht.", "deleted": deleted_items}), 200
+    
+# Alles in DB löschen:    
+@app.route('/delete_all_data', methods=['DELETE'])
+def delete_all_data():
+    """
+    Löscht alle hochgeladenen PDF-Dateien, alle zugehörigen ChromaDB-Daten
+    und leert den In-Memory-Cache der Vector Stores.
+    """
+    print("Anfrage zum Löschen aller Daten erhalten.")
+    deleted_items = []
+    errors = []
+
+    # Alle PDFs löschen und Ordner neu erstellen
+    try:
+        if os.path.exists(UPLOAD_FOLDER):
+            shutil.rmtree(UPLOAD_FOLDER)
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True) 
+            deleted_items.append(f"Alle Dateien im '{UPLOAD_FOLDER}' Ordner")
+            print(f"Alle Dateien im '{UPLOAD_FOLDER}' Ordner erfolgreich gelöscht und Ordner neu erstellt.")
+        else:
+            print(f"Ordner '{UPLOAD_FOLDER}' existiert nicht. Keine PDF-Dateien zu löschen.")
+    except Exception as e:
+        errors.append(f"Fehler beim Löschen der PDF-Dateien im '{UPLOAD_FOLDER}' Ordner: {e}")
+        print(f"Fehler beim Löschen der PDF-Dateien im '{UPLOAD_FOLDER}' Ordner: {e}")
+        traceback.print_exc()
+
+    # Alle ChromaDB-Daten löschen und Ordner neu erstellen
+    try:
+        if os.path.exists(VECTOR_DB_DIR):
+            shutil.rmtree(VECTOR_DB_DIR)
+            os.makedirs(VECTOR_DB_DIR, exist_ok=True) 
+            deleted_items.append(f"Alle Daten im '{VECTOR_DB_DIR}' Ordner")
+            print(f"Alle Daten im '{VECTOR_DB_DIR}' Ordner erfolgreich gelöscht und Ordner neu erstellt.")
+        else:
+            print(f"Ordner '{VECTOR_DB_DIR}' existiert nicht. Keine ChromaDB-Daten zu löschen.")
+    except Exception as e:
+        errors.append(f"Fehler beim Löschen der ChromaDB-Daten im '{VECTOR_DB_DIR}' Ordner: {e}")
+        print(f"Fehler beim Löschen der ChromaDB-Daten im '{VECTOR_DB_DIR}' Ordner: {e}")
+        traceback.print_exc()
+
+    # In-Memory-Cache leeren
+    if vector_stores_cache:
+        vector_stores_cache.clear()
+        deleted_items.append("In-Memory-Cache für Vector Stores")
+        print("In-Memory-Cache für Vector Stores geleert.")
+    else:
+        print("In-Memory-Cache für Vector Stores ist bereits leer.")
+
+    # Extrahierte JSON-Dateien löschen (wenn wir dann implementiert haben)
+    try:
+        if os.path.exists(JSON_OUTPUT_FOLDER):
+            shutil.rmtree(JSON_OUTPUT_FOLDER)
+            os.makedirs(JSON_OUTPUT_FOLDER, exist_ok=True)
+            deleted_items.append(f"Alle Dateien im '{JSON_OUTPUT_FOLDER}' Ordner")
+            print(f"Alle Dateien im '{JSON_OUTPUT_FOLDER}' Ordner erfolgreich gelöscht und Ordner neu erstellt.")
+        else:
+            print(f"Ordner '{JSON_OUTPUT_FOLDER}' existiert nicht. Keine JSON-Dateien zu löschen.")
+    except Exception as e:
+        errors.append(f"Fehler beim Löschen der JSON-Dateien im '{JSON_OUTPUT_FOLDER}' Ordner: {e}")
+        print(f"Fehler beim Löschen der JSON-Dateien im '{JSON_OUTPUT_FOLDER}' Ordner: {e}")
+        traceback.print_exc()
+
+    if errors:
+        return jsonify({"message": "Löschvorgang abgeschlossen, aber mit Fehlern.", "deleted": deleted_items, "errors": errors}), 500
+    else:
+        return jsonify({"message": "Alle Daten erfolgreich gelöscht.", "deleted": deleted_items}), 200
 
 if __name__ == '__main__':
     print("Starting Flask backend server...")
-    for collection_name in os.listdir(VECTOR_DB_DIR):
-        if os.path.isdir(os.path.join(VECTOR_DB_DIR, collection_name)):
-            try:
-                get_or_create_vector_store(collection_name)
-            except Exception as e:
-                print(f"Konnte persistente ChromaDB Sammlung '{collection_name}' nicht beim Start laden: {e}")
-                traceback.print_exc()
-
+    if os.path.exists(VECTOR_DB_DIR):
+        try:
+            client = chromadb.PersistentClient(path=VECTOR_DB_DIR)
+            existing_collections = client.list_collections()
+            for collection in existing_collections:
+                collection_name = collection.name
+                try:
+                    vector_store = Chroma(
+                        persist_directory=VECTOR_DB_DIR,
+                        embedding_function=embeddings,
+                        collection_name=collection_name
+                    )
+                    if vector_store._collection.count() > 0:
+                        vector_stores_cache[collection_name] = vector_store
+                        print(f"ChromaDB collection '{collection_name}' von Festplatte geladen und im Cache.")
+                    else:
+                        print(f"ChromaDB collection '{collection_name}' gefunden, aber leer beim Start. Wird ignoriert.")
+                except Exception as e:
+                    print(f"WARNUNG: Konnte ChromaDB Sammlung '{collection_name}' beim Start nicht vollständig laden: {e}")
+                    traceback.print_exc()
+        except Exception as e:
+            print(f"FEHLER: ChromaDB Client konnte für '{VECTOR_DB_DIR}' beim Start nicht initialisiert werden: {e}")
+            traceback.print_exc()
+    else:
+        print(f"ChromaDB Datenverzeichnis '{VECTOR_DB_DIR}' nicht gefunden. Es werden keine bestehenden Sammlungen geladen.")
+    
     app.run(host="127.0.0.1", port=5000, debug=True)
