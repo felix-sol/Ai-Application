@@ -1,0 +1,25 @@
+version: '3.8' # Verwendete Docker Compose Datei-Formatversion
+
+services:
+  backend:
+    # Build-Kontext: Docker soll das Dockerfile im ./backend-Ordner finden und verwenden
+    build: ./backend
+    # Port-Mapping: Map den Container-Port 5000 auf den Host-Port 5000.
+    # Du kannst dann deine App unter http://localhost:5000 erreichen.
+    ports:
+      - "5000:5000"
+    # Volumes: Dauerhafte Speicherung von Daten, die über die Lebensdauer des Containers hinausgehen.
+    # Hier werden lokale Ordner auf dem Host-System mit Ordnern im Container verbunden.
+    volumes:
+      # Alle hochgeladenen PDFs werden im Host-Ordner 'uploaded_pdfs' gespeichert
+      - ./uploaded_pdfs:/app/backend/uploaded_pdfs
+      # Die ChromaDB-Daten werden im Host-Ordner 'chroma_db_data' gespeichert
+      - ./chroma_db_data:/app/backend/chroma_db_data
+      # Extraktierte JSONs (falls von Marcel implementiert)
+      - ./extracted_jsons:/app/backend/extracted_jsons
+    # Umgebungsvariablen: Übergebe die API-Keys aus deiner Host-Umgebung (oder einer .env-Datei neben docker-compose.yml)
+    # an den Container. Deine app.py kann sie dann über os.getenv() lesen.
+    environment:
+      - SAIA_API_KEY=${SAIA_API_KEY}
+    # Neustart-Richtlinie: Startet den Container automatisch neu, falls er unerwartet stoppt
+    restart: unless-stopped

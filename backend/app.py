@@ -1,3 +1,6 @@
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 import traceback
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv

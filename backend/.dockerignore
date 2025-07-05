@@ -1,0 +1,17 @@
+.git
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.pytest_cache/
+.vscode/
+# Ordner für Daten, die als Volume gemountet werden, also nicht ins Image gehören
+uploaded_pdfs/
+chroma_db_data/
+extracted_jsons/
+# Umgebungsvariablen-Datei
+.env
