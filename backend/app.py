@@ -46,15 +46,12 @@ def get_or_create_vector_store(pdf_id: str, text_chunks: list[str] = None):
     Lädt eine ChromaDB-Sammlung aus dem Cache oder von der Festplatte.
     Erstellt sie neu, wenn sie nicht existiert oder leer ist und text_chunks bereitgestellt werden.
     """
-    print(f"DEBUG: get_or_create_vector_store aufgerufen für PDF ID: {pdf_id}")
 
     if pdf_id in vector_stores_cache:
-        print(f"DEBUG: ChromaDB collection '{pdf_id}' aus Cache geladen.")
         return vector_stores_cache[pdf_id]
 
     vector_store_from_disk = None
     try:
-        print(f"DEBUG: Versuche ChromaDB collection '{pdf_id}' von Festplatte zu laden.")
         client = chromadb.PersistentClient(path=VECTOR_DB_DIR)
         collection_exists = any(c.name == pdf_id for c in client.list_collections())
 
@@ -66,19 +63,17 @@ def get_or_create_vector_store(pdf_id: str, text_chunks: list[str] = None):
             )
             if vector_store_from_disk._collection.count() > 0:
                 vector_stores_cache[pdf_id] = vector_store_from_disk
-                print(f"DEBUG: ChromaDB collection '{pdf_id}' von Festplatte geladen und ist nicht leer.")
                 return vector_store_from_disk
             else:
-                print(f"DEBUG: ChromaDB collection '{pdf_id}' auf Festplatte gefunden, aber leer.")
+                pass
         else:
-            print(f"DEBUG: ChromaDB collection '{pdf_id}' nicht auf Festplatte gefunden.")
+            pass
 
     except Exception as e:
         print(f"WARNUNG: Konnte ChromaDB collection '{pdf_id}' nicht von Festplatte laden (oder sie ist beschädigt): {e}")
 
     if text_chunks:
         try:
-            print(f"DEBUG: Erstelle/Aktualisiere neue ChromaDB collection '{pdf_id}' mit {len(text_chunks)} Chunks.")
             vector_store = Chroma.from_texts(
                 texts=text_chunks,
                 embedding=embeddings,
@@ -86,7 +81,6 @@ def get_or_create_vector_store(pdf_id: str, text_chunks: list[str] = None):
                 persist_directory=VECTOR_DB_DIR
             )
             vector_stores_cache[pdf_id] = vector_store
-            print(f"DEBUG: ChromaDB collection '{pdf_id}' neu erstellt/aktualisiert und gespeichert.")
             return vector_store
         except Exception as inner_e:
             print(f"FEHLER: Fehler beim Erstellen/Aktualisieren neuer ChromaDB collection '{pdf_id}': {inner_e}")
@@ -120,7 +114,6 @@ def upload_pdf():
 
         try:
             pdf_file.save(file_path)
-            print(f"PDF saved to {file_path}")
 
             full_pdf_text = read_pdf(file_path)
             if not full_pdf_text:
@@ -134,7 +127,6 @@ def upload_pdf():
 
             try:
                 vector_store = get_or_create_vector_store(unique_filename, text_chunks)
-                print(f"PDF content embedded and stored in ChromaDB collection '{unique_filename}' with {len(text_chunks)} chunks.")
             except Exception as e:
                 print(f"Error handling ChromaDB for {unique_filename}: {e}")
                 traceback.print_exc()
@@ -165,10 +157,9 @@ def chat_with_pdf():
         vector_store = get_or_create_vector_store(pdf_id)
     except Exception as e:
         print(f"Error loading vector store for PDF {pdf_id}: {e}")
-        traceback.print_exc()
+        traceback.print_exc() 
         return jsonify({"error": "PDF content not found or could not be loaded. Please upload the PDF again."}), 404
 
-    print(f"Verarbeite Chat-Anfrage für PDF '{pdf_id}' mit Frage '{user_question}'")
 
     retrieved_docs = vector_store.similarity_search(user_question, k=5)
 
@@ -179,8 +170,6 @@ def chat_with_pdf():
 
     if len(context_for_llm) > MAX_CONTEXT_CHAR_LIMIT:
         context_for_llm = context_for_llm[:MAX_CONTEXT_CHAR_LIMIT] + "\n\n[Kontext gekürzt aufgrund der Länge...]"
-    else:
-        print(f"Kontextlänge an LLM: {len(context_for_llm)} Zeichen.")
 
     try:
         llm_answer = get_llm_response(
@@ -190,18 +179,17 @@ def chat_with_pdf():
         )
         return jsonify({"answer": llm_answer}), 200
     except Exception as e:
-        print(f"Fehler bei der Kommunikation mit dem KI-Modell: {e}")
+        print(f"Fehler bei der Kommunikation mit dem KI-Modell: {e}") 
         traceback.print_exc()
         return jsonify({"error": f"Fehler bei der Kommunikation mit dem KI-Modell: {str(e)}"}), 500
         
-# PDF und zugehörige ChromaDB-Sammlung löschen:
+
 @app.route('/delete_pdf/<pdf_id>', methods=['DELETE'])
 def delete_pdf(pdf_id):
     print(f"Received delete request for PDF ID: {pdf_id}")
 
-    pdf_file_path = os.path.join(UPLOAD_FOLDER, pdf_id) # Pfad zur PDF Datei
-    chroma_collection_path = os.path.join(VECTOR_DB_DIR, pdf_id) # Pfad zur ChromeDB Datenbank
-    json_file_path = os.path.join(JSON_OUTPUT_FOLDER, f"{pdf_id}.json") # Pfad zur JSON Datei (Implementiert Marcel erst ja noch)
+    pdf_file_path = os.path.join(UPLOAD_FOLDER, pdf_id)
+    json_file_path = os.path.join(JSON_OUTPUT_FOLDER, f"{pdf_id}.json")
 
     deleted_items = []
     errors = []
@@ -211,20 +199,15 @@ def delete_pdf(pdf_id):
         try:
             os.remove(pdf_file_path)
             deleted_items.append(f"PDF-Datei '{pdf_id}'")
-            print(f"PDF-Datei '{pdf_file_path}' erfolgreich gelöscht.")
         except Exception as e:
             errors.append(f"Fehler beim Löschen der PDF-Datei '{pdf_id}': {e}")
             print(f"Fehler beim Löschen der PDF-Datei '{pdf_file_path}': {e}")
             traceback.print_exc()
-    else:
-        print(f"PDF-Datei '{pdf_id}' nicht gefunden zum Löschen.")
 
     # ChromaDB Inhalt löschen:
-    # Aus dem aktiven Cache:
     if pdf_id in vector_stores_cache:
         try:
             del vector_stores_cache[pdf_id]
-            print(f"ChromaDB-Sammlung '{pdf_id}' aus Cache entfernt.")
         except Exception as e:
             errors.append(f"Fehler beim Entfernen der ChromaDB-Sammlung '{pdf_id}' aus dem Cache: {e}")
             print(f"Fehler beim Entfernen der ChromaDB-Sammlung '{pdf_id}' aus dem Cache: {e}")
@@ -237,21 +220,18 @@ def delete_pdf(pdf_id):
             try:
                 client.delete_collection(name=pdf_id)
                 deleted_items.append(f"ChromaDB-Sammlung '{pdf_id}'")
-                print(f"ChromaDB-Sammlung '{pdf_id}' erfolgreich über ChromaDB Client gelöscht.")
             except Exception as e:
                 if "does not exist" in str(e).lower():
-                    print(f"ChromaDB-Sammlung '{pdf_id}' existierte nicht zum Löschen (oder wurde bereits gelöscht).")
+                    pass
                 else:
                     errors.append(f"Fehler beim Löschen der ChromaDB-Sammlung '{pdf_id}' über Client: {e}")
-                    print(f"Fehler beim Löschen der ChromaDB-Sammlung '{pdf_id}' über Client: {e}")
+                    print(f"Fehler beim Löschen der ChromaDB-Sammlung '{pdf_id}' über Client: {e}") 
                     traceback.print_exc()
-        else:
-            print(f"ChromaDB Hauptverzeichnis '{VECTOR_DB_DIR}' existiert nicht. Keine Sammlungen zu löschen.")
 
     except Exception as e:
         errors.append(f"Allgemeiner Fehler bei der ChromaDB-Sammlung-Löschung für '{pdf_id}': {e}")
-        print(f"Allgemeiner Fehler bei der ChromaDB-Sammlung-Löschung für '{pdf_id}': {e}")
-        traceback.print_exc()
+        print(f"Allgemeiner Fehler bei der ChromaDB-Sammlung-Löschung für '{pdf_id}': {e}") 
+        traceback.print_exc() 
 
 
     # JSON-Datei löschen (falls überhaupt vorhanden):
@@ -259,13 +239,10 @@ def delete_pdf(pdf_id):
         try:
             os.remove(json_file_path)
             deleted_items.append(f"JSON-Datei '{pdf_id}.json'")
-            print(f"JSON-Datei '{json_file_path}' erfolgreich gelöscht.")
         except Exception as e:
             errors.append(f"Fehler beim Löschen der JSON-Datei '{pdf_id}.json': {e}")
-            print(f"Fehler beim Löschen der JSON-Datei '{json_file_path}': {e}")
-            traceback.print_exc()
-    else:
-        print(f"JSON-Datei '{pdf_id}.json' nicht gefunden zum Löschen.")
+            print(f"Fehler beim Löschen der JSON-Datei '{json_file_path}': {e}") 
+            traceback.print_exc() 
 
 
     if errors:
@@ -275,7 +252,7 @@ def delete_pdf(pdf_id):
     else:
         return jsonify({"message": f"Ressourcen für PDF ID '{pdf_id}' erfolgreich gelöscht.", "deleted": deleted_items}), 200
         
-# Alles in DB löschen:      
+# Alles in DB löschen:       
 @app.route('/delete_all_data', methods=['DELETE'])
 def delete_all_data():
     """
@@ -292,13 +269,10 @@ def delete_all_data():
             shutil.rmtree(UPLOAD_FOLDER)
             os.makedirs(UPLOAD_FOLDER, exist_ok=True) 
             deleted_items.append(f"Alle Dateien im '{UPLOAD_FOLDER}' Ordner")
-            print(f"Alle Dateien im '{UPLOAD_FOLDER}' Ordner erfolgreich gelöscht und Ordner neu erstellt.")
-        else:
-            print(f"Ordner '{UPLOAD_FOLDER}' existiert nicht. Keine PDF-Dateien zu löschen.")
     except Exception as e:
         errors.append(f"Fehler beim Löschen der PDF-Dateien im '{UPLOAD_FOLDER}' Ordner: {e}")
-        print(f"Fehler beim Löschen der PDF-Dateien im '{UPLOAD_FOLDER}' Ordner: {e}")
-        traceback.print_exc()
+        print(f"Fehler beim Löschen der PDF-Dateien im '{UPLOAD_FOLDER}' Ordner: {e}") 
+        traceback.print_exc() 
 
     # Alle ChromaDB-Daten löschen und Ordner neu erstellen
     try:
@@ -306,21 +280,15 @@ def delete_all_data():
             shutil.rmtree(VECTOR_DB_DIR)
             os.makedirs(VECTOR_DB_DIR, exist_ok=True) 
             deleted_items.append(f"Alle Daten im '{VECTOR_DB_DIR}' Ordner")
-            print(f"Alle Daten im '{VECTOR_DB_DIR}' Ordner erfolgreich gelöscht und Ordner neu erstellt.")
-        else:
-            print(f"Ordner '{VECTOR_DB_DIR}' existiert nicht. Keine ChromaDB-Daten zu löschen.")
     except Exception as e:
         errors.append(f"Fehler beim Löschen der ChromaDB-Daten im '{VECTOR_DB_DIR}' Ordner: {e}")
-        print(f"Fehler beim Löschen der ChromaDB-Daten im '{VECTOR_DB_DIR}' Ordner: {e}")
+        print(f"Fehler beim Löschen der ChromaDB-Daten im '{VECTOR_DB_DIR}' Ordner: {e}") 
         traceback.print_exc()
 
     # In-Memory-Cache leeren
     if vector_stores_cache:
         vector_stores_cache.clear()
         deleted_items.append("In-Memory-Cache für Vector Stores")
-        print("In-Memory-Cache für Vector Stores geleert.")
-    else:
-        print("In-Memory-Cache für Vector Stores ist bereits leer.")
 
     # Extrahierte JSON-Dateien löschen (wenn wir dann implementiert haben)
     try:
@@ -328,12 +296,9 @@ def delete_all_data():
             shutil.rmtree(JSON_OUTPUT_FOLDER)
             os.makedirs(JSON_OUTPUT_FOLDER, exist_ok=True)
             deleted_items.append(f"Alle Dateien im '{JSON_OUTPUT_FOLDER}' Ordner")
-            print(f"Alle Dateien im '{JSON_OUTPUT_FOLDER}' Ordner erfolgreich gelöscht und Ordner neu erstellt.")
-        else:
-            print(f"Ordner '{JSON_OUTPUT_FOLDER}' existiert nicht. Keine JSON-Dateien zu löschen.")
     except Exception as e:
         errors.append(f"Fehler beim Löschen der JSON-Dateien im '{JSON_OUTPUT_FOLDER}' Ordner: {e}")
-        print(f"Fehler beim Löschen der JSON-Dateien im '{JSON_OUTPUT_FOLDER}' Ordner: {e}")
+        print(f"Fehler beim Löschen der JSON-Dateien im '{JSON_OUTPUT_FOLDER}' Ordner: {e}") 
         traceback.print_exc()
 
     if errors:
@@ -344,4 +309,5 @@ def delete_all_data():
 
 if __name__ == '__main__':
     print("Starting Flask backend server...")
+    # Finalisiert dann debug=False setzen und einen Produktions-Webserver wie Gunicorn verwenden
     app.run(host="127.0.0.1", port=5000, debug=True)
