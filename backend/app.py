@@ -2,8 +2,7 @@ __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 import traceback
-from flask import Flask, request, jsonify
-from flask import send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
 from dotenv import load_dotenv
 import os
 import uuid
@@ -14,7 +13,6 @@ from langchain_community.vectorstores import Chroma
 from embeddingWrapper import SAIAEmbeddings
 import shutil
 import chromadb
-
 
 
 app = Flask(__name__)
@@ -31,58 +29,72 @@ os.makedirs(JSON_OUTPUT_FOLDER, exist_ok=True)
 
 MAX_CONTEXT_CHAR_LIMIT = 28000
 
-
 load_dotenv()
 api_key = os.getenv("SAIA_API_KEY")
 
 if not api_key:
+    print("FEHLER: SAIA_API_KEY nicht gefunden! Bitte in .env setzen oder als Umgebungsvariable übergeben.")
     raise ValueError("API Key nicht gefunden! Bitte in .env setzen.")
+
 
 embeddings = SAIAEmbeddings(api_key)
 
 vector_stores_cache = {}
 
 def get_or_create_vector_store(pdf_id: str, text_chunks: list[str] = None):
+    """
+    Lädt eine ChromaDB-Sammlung aus dem Cache oder von der Festplatte.
+    Erstellt sie neu, wenn sie nicht existiert oder leer ist und text_chunks bereitgestellt werden.
+    """
+    print(f"DEBUG: get_or_create_vector_store aufgerufen für PDF ID: {pdf_id}")
+
     if pdf_id in vector_stores_cache:
-        print(f"ChromaDB collection '{pdf_id}' aus Cache geladen.")
+        print(f"DEBUG: ChromaDB collection '{pdf_id}' aus Cache geladen.")
         return vector_stores_cache[pdf_id]
 
+    vector_store_from_disk = None
     try:
-        vector_store = Chroma(
-            persist_directory=VECTOR_DB_DIR,
-            embedding_function=embeddings,
-            collection_name=pdf_id
-        )
+        print(f"DEBUG: Versuche ChromaDB collection '{pdf_id}' von Festplatte zu laden.")
+        client = chromadb.PersistentClient(path=VECTOR_DB_DIR)
+        collection_exists = any(c.name == pdf_id for c in client.list_collections())
 
-        if vector_store._collection.count() > 0:
-            vector_stores_cache[pdf_id] = vector_store
-            print(f"ChromaDB collection '{pdf_id}' von Festplatte geladen.")
-            return vector_store
+        if collection_exists:
+            vector_store_from_disk = Chroma(
+                persist_directory=VECTOR_DB_DIR,
+                embedding_function=embeddings,
+                collection_name=pdf_id
+            )
+            if vector_store_from_disk._collection.count() > 0:
+                vector_stores_cache[pdf_id] = vector_store_from_disk
+                print(f"DEBUG: ChromaDB collection '{pdf_id}' von Festplatte geladen und ist nicht leer.")
+                return vector_store_from_disk
+            else:
+                print(f"DEBUG: ChromaDB collection '{pdf_id}' auf Festplatte gefunden, aber leer.")
         else:
-            print(f"ChromaDB collection '{pdf_id}' auf Festplatte gefunden, aber leer. Neuaufbau nötig.")
-            raise ValueError("Collection empty, needs rebuild.")
+            print(f"DEBUG: ChromaDB collection '{pdf_id}' nicht auf Festplatte gefunden.")
+
     except Exception as e:
-        print(f"Konnte ChromaDB collection '{pdf_id}' nicht laden: {e}")
-        traceback.print_exc()
-        if text_chunks:
-            try:
-                print(f"Erstelle neue ChromaDB collection '{pdf_id}'.")
-                vector_store = Chroma.from_texts(
-                    texts=text_chunks,
-                    embedding=embeddings, 
-                    collection_name=pdf_id,
-                    persist_directory=VECTOR_DB_DIR
-                )
-                vector_store.persist()
-                vector_stores_cache[pdf_id] = vector_store
-                print(f"ChromaDB collection '{pdf_id}' neu erstellt und gespeichert.")
-                return vector_store
-            except Exception as inner_e:
-                print(f"Fehler beim Erstellen neuer ChromaDB collection: {inner_e}")
-                traceback.print_exc()
-                raise inner_e
-        else:
-            raise Exception(f"Vector store für '{pdf_id}' nicht gefunden und keine Text-Chunks zum Erstellen bereitgestellt.")
+        print(f"WARNUNG: Konnte ChromaDB collection '{pdf_id}' nicht von Festplatte laden (oder sie ist beschädigt): {e}")
+
+    if text_chunks:
+        try:
+            print(f"DEBUG: Erstelle/Aktualisiere neue ChromaDB collection '{pdf_id}' mit {len(text_chunks)} Chunks.")
+            vector_store = Chroma.from_texts(
+                texts=text_chunks,
+                embedding=embeddings,
+                collection_name=pdf_id,
+                persist_directory=VECTOR_DB_DIR
+            )
+            vector_stores_cache[pdf_id] = vector_store
+            print(f"DEBUG: ChromaDB collection '{pdf_id}' neu erstellt/aktualisiert und gespeichert.")
+            return vector_store
+        except Exception as inner_e:
+            print(f"FEHLER: Fehler beim Erstellen/Aktualisieren neuer ChromaDB collection '{pdf_id}': {inner_e}")
+            traceback.print_exc()
+            raise Exception(f"Failed to create/update vector store: {inner_e}")
+    else:
+        print(f"FEHLER: Vector store für '{pdf_id}' nicht gefunden und keine Text-Chunks zum Erstellen bereitgestellt.")
+        raise Exception(f"Vector store for '{pdf_id}' not found and no text chunks provided to create it.")
         
 @app.route('/static_pdfs/<filename>')
 def serve_pdf(filename):
@@ -181,6 +193,7 @@ def chat_with_pdf():
         print(f"Fehler bei der Kommunikation mit dem KI-Modell: {e}")
         traceback.print_exc()
         return jsonify({"error": f"Fehler bei der Kommunikation mit dem KI-Modell: {str(e)}"}), 500
+        
 # PDF und zugehörige ChromaDB-Sammlung löschen:
 @app.route('/delete_pdf/<pdf_id>', methods=['DELETE'])
 def delete_pdf(pdf_id):
@@ -261,8 +274,8 @@ def delete_pdf(pdf_id):
         return jsonify({"message": f"Keine Ressourcen für PDF ID '{pdf_id}' gefunden zum Löschen."}), 404
     else:
         return jsonify({"message": f"Ressourcen für PDF ID '{pdf_id}' erfolgreich gelöscht.", "deleted": deleted_items}), 200
-    
-# Alles in DB löschen:    
+        
+# Alles in DB löschen:      
 @app.route('/delete_all_data', methods=['DELETE'])
 def delete_all_data():
     """
@@ -328,32 +341,7 @@ def delete_all_data():
     else:
         return jsonify({"message": "Alle Daten erfolgreich gelöscht.", "deleted": deleted_items}), 200
 
+
 if __name__ == '__main__':
     print("Starting Flask backend server...")
-    if os.path.exists(VECTOR_DB_DIR):
-        try:
-            client = chromadb.PersistentClient(path=VECTOR_DB_DIR)
-            existing_collections = client.list_collections()
-            for collection in existing_collections:
-                collection_name = collection.name
-                try:
-                    vector_store = Chroma(
-                        persist_directory=VECTOR_DB_DIR,
-                        embedding_function=embeddings,
-                        collection_name=collection_name
-                    )
-                    if vector_store._collection.count() > 0:
-                        vector_stores_cache[collection_name] = vector_store
-                        print(f"ChromaDB collection '{collection_name}' von Festplatte geladen und im Cache.")
-                    else:
-                        print(f"ChromaDB collection '{collection_name}' gefunden, aber leer beim Start. Wird ignoriert.")
-                except Exception as e:
-                    print(f"WARNUNG: Konnte ChromaDB Sammlung '{collection_name}' beim Start nicht vollständig laden: {e}")
-                    traceback.print_exc()
-        except Exception as e:
-            print(f"FEHLER: ChromaDB Client konnte für '{VECTOR_DB_DIR}' beim Start nicht initialisiert werden: {e}")
-            traceback.print_exc()
-    else:
-        print(f"ChromaDB Datenverzeichnis '{VECTOR_DB_DIR}' nicht gefunden. Es werden keine bestehenden Sammlungen geladen.")
-    
     app.run(host="127.0.0.1", port=5000, debug=True)
