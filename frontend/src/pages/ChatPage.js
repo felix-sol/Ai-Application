@@ -1,3 +1,4 @@
+// ChatPage.js
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -6,118 +7,144 @@ import Header from '../components/Header';
 import chatPageHeaderStyles from '../components/Header.module.css';
 import Footer from '../components/Footer';
 import chatPageFooterStyles from '../components/Footer.module.css';
-
+import { Worker, Viewer } from '@react-pdf-viewer/core';
+import '@react-pdf-viewer/core/lib/styles/index.css';
 
 function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  // HIER DIE ÄNDERUNG: Den übergebenen State auslesen
   const location = useLocation();
-  // Wir lesen den pdfName aus dem State. Falls die Seite direkt aufgerufen wird,
-  // nutzen wir einen Standardtext als Rückfalloption.
-  const pdfName = location.state?.pdfName || 'PDF-Chat';
+  const pdfId = location.state?.pdfId || 'PDF-Chat'; // Dies ist der unique_filename
+  const displayFileName = location.state?.displayFileName || 'Unbekanntes Dokument'; // Dies ist der ursprüngliche Dateiname
+  const pdfUrl = location.state?.pdfUrl || null; // Die URL zum Anzeigen der PDF
 
   const handleSendMessage = async (e) => {
-  e.preventDefault();
-  if (input.trim() === '') return;
+    e.preventDefault();
+    if (input.trim() === '' || isLoading) return;
 
-  const userMessage = { text: input, sender: 'user' };
-  setMessages(prev => [...prev, userMessage]);
+    const userMessage = { text: input, sender: 'user' };
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
 
-  try {
-    const response = await fetch('http://localhost:5000/chat', {   // Backend URL anpassen
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',   // Wichtig!
-      },
-      body: JSON.stringify({
-        question: input,      // hier kommt die Frage rein
-        pdf_id: pdfName,        // hier die ID deiner PDF (aus Upload oder State)
-      }),
-    });
+    try {
+      const response = await fetch('http://localhost:5000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question: input,
+          pdf_id: pdfId, // Wichtig: Hier unique_filename (pdfId) verwenden!
+        }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (response.ok) {
-      const botResponse = { text: data.answer, sender: 'bot' };
+      const botResponse = {
+        text: response.ok ? data.answer : data.error || "Fehler beim Chatten.",
+        sender: 'bot',
+      };
       setMessages(prev => [...prev, botResponse]);
-    } else {
-      const botResponse = { text: data.error || "Fehler beim Chatten.", sender: 'bot' };
+    } catch (error) {
+      const botResponse = { text: 'Netzwerkfehler: ' + error.message, sender: 'bot' };
       setMessages(prev => [...prev, botResponse]);
+    } finally {
+      setIsLoading(false);
+      setInput('');
     }
-  } catch (error) {
-    const botResponse = { text: 'Netzwerkfehler: ' + error.message, sender: 'bot' };
-    setMessages(prev => [...prev, botResponse]);
-  }
-
-  setInput('');
-};
-
-
+  };
 
   const handleExtractAndDownload = () => {
     const jsonResult = {
-        "name_of_the_doc": pdfName,
-       "CO2" : "…", 
-       "NOX" : "…", 
-       "Number_of_Electric_Vehicles" : "…", 
-       "Impact" : "…", 
-       "Risks" : "…", 
-       "Opportunities" : "…", 
-       "Strategy" : "…", 
-       "Actions" : "…", 
-       "Adopted_policies" : "…",
-       "Targets" : "…" 
+      "name_of_the_doc": displayFileName, // ✅ HIER ANPASSEN: displayFileName verwenden
+      "CO2": "…",
+      "NOX": "…",
+      "Number_of_Electric_Vehicles": "…",
+      "Impact": "…",
+      "Risks": "…",
+      "Opportunities": "…",
+      "Strategy": "…",
+      "Actions": "…",
+      "Adopted_policies": "…",
+      "Targets": "…"
     };
-    
+
     const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
       JSON.stringify(jsonResult, null, 2)
     )}`;
     const link = document.createElement('a');
     link.href = jsonString;
-    link.download = `${pdfName.split('.')[0]}-analyse.json`; 
+    // Der Dateiname für den Download sollte vom ursprünglichen Dateinamen abgeleitet werden.
+    // Das ".split('.')[0]" ist nicht ganz robust bei Dateinamen mit mehreren Punkten.
+    // Besser wäre es, die Dateiendung korrekt zu entfernen:
+    const downloadFileNameWithoutExtension = displayFileName.split('.').slice(0, -1).join('.');
+    link.download = `${downloadFileNameWithoutExtension}-analyse.json`;
     link.click();
   };
 
   return (
     <>
       <Header
-  title="PDF-Chat"
-  className={chatPageHeaderStyles.chatPageHeader}
->
-  <Link to="/" className="back-button">Back to Main</Link>
-</Header>
+        title="PDF-Chat"
+        className={chatPageHeaderStyles.chatPageHeader}>
+        <Link to="/" className="back-button">Return to Main</Link>
+      </Header>
 
       <main className="chat-main">
-        <div className="chat-window">
-          <h2 id="h2"> {pdfName} </h2>
-          {messages.map((msg, index) => (
-            <div key={index} className={`message ${msg.sender}`}>
-              <p>{msg.text}</p>
-            </div>
-          ))}
+        {/* PDF-Viewer */}
+        <div className="pdf-viewer">
+          <Worker workerUrl={`https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`}>
+            {pdfUrl ? (
+              <Viewer fileUrl={pdfUrl} />
+            ) : (
+              <div className="pdf-viewer-placeholder">
+                <p>PDF konnte nicht geladen werden oder ist nicht verfügbar.</p>
+              </div>
+            )}
+          </Worker>
         </div>
 
-        <form className="chat-input-area" onSubmit={handleSendMessage}>
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="ask something..."
-          />
-          <button type="submit">Send</button>
-          <button onClick={handleExtractAndDownload} className="download-button">
-         Download
-       </button>
-        </form>
+        {/* Chat-Bereich */}
+        <div className="chat-container">
+          <div className="chat-window">
+            <h2 id="h2">{displayFileName}</h2> {/* ✅ Hier wird der Original-Dateiname angezeigt */}
+
+            {messages.map((msg, index) => (
+              <div key={index} className={`message ${msg.sender}`}>
+                <p>{msg.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <form className="chat-input-area" onSubmit={handleSendMessage}>
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey && !isLoading) {
+                  e.preventDefault();
+                  handleSendMessage(e);
+                }
+              }}
+              placeholder="ask something..."
+              disabled={isLoading}
+            />
+            <button type="submit" disabled={isLoading}>Send</button>
+            <button type="button" onClick={handleExtractAndDownload} disabled={isLoading}>
+              Download Key Values
+            </button>
+          </form>
+        </div>
       </main>
 
       <Footer
-  className={chatPageFooterStyles.chatPageFooter}
-  title="Any Problems? Feel free to send us an E-Mail!"
-  contact="felix.soltau@stud.leuphana.de"
-/>
+        className={chatPageFooterStyles.chatPageFooter}
+        title="Any Problems? Feel free to send us an E-Mail!"
+        contact="felix.soltau@stud.leuphana.de"
+      />
     </>
   );
 }

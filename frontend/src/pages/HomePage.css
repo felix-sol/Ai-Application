@@ -8,7 +8,7 @@
 
 .home-container {
   width: 100%;
-   min-height: calc(100vh - 150px);   /* Beispiel: calc(100vh - 150px); */
+   min-height: calc(100vh - 150px);   
   display: flex;
   justify-content: center;
   align-items: center;
@@ -77,4 +77,24 @@
 
 .upload-button:hover {
   background-color: #689bd1;
+}
+
+.spinner {
+  width: clamp(25px, 5vw, 40px); /* min. 30px, max. 80px */
+  aspect-ratio: 1;
+  border: 3px solid rgb(248, 247, 243);
+  border-left-color: #3498db;
+  border-radius: 50%;
+  animation: spin 1.3s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.upload-button.disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }

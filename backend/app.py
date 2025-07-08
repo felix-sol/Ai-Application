@@ -3,6 +3,7 @@ import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 import traceback
 from flask import Flask, request, jsonify
+from flask import send_from_directory
 from dotenv import load_dotenv
 import os
 import uuid
@@ -13,6 +14,7 @@ from langchain_community.vectorstores import Chroma
 from embeddingWrapper import SAIAEmbeddings
 import shutil
 import chromadb
+
 
 
 app = Flask(__name__)
@@ -37,7 +39,6 @@ if not api_key:
     raise ValueError("API Key nicht gefunden! Bitte in .env setzen.")
 
 embeddings = SAIAEmbeddings(api_key)
-
 
 vector_stores_cache = {}
 
@@ -82,6 +83,10 @@ def get_or_create_vector_store(pdf_id: str, text_chunks: list[str] = None):
                 raise inner_e
         else:
             raise Exception(f"Vector store für '{pdf_id}' nicht gefunden und keine Text-Chunks zum Erstellen bereitgestellt.")
+        
+@app.route('/static_pdfs/<filename>')
+def serve_pdf(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)         
 
 @app.route('/upload_pdf', methods=['POST'])
 def upload_pdf():
@@ -126,8 +131,8 @@ def upload_pdf():
 
             return jsonify({
                 "message": "PDF uploaded, processed and embedded",
-                "pdf_id": unique_filename,
-                "filename": pdf_file.filename
+                "filename": pdf_file.filename,
+                "pdf_url": f"http://localhost:5000/static_pdfs/{unique_filename}"
             }), 200
         except Exception as e:
             print(f"Server error during PDF processing: {e}")
