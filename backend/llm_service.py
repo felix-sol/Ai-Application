@@ -91,13 +91,15 @@ def extract_document_json(context: str) -> dict:
         f"{json.dumps(schema, ensure_ascii=False, indent=2)}"
     )
 
+# Die funktion get LLM response wird verwendet um mit veränderten Parametern eine Anfrage an das LLM Modell zu schicken
+
     # 3) Call ans LLM
     raw = get_llm_response(
         user_question="",
         system_prompt=system_prompt,
         context=context
     )
-
+# Danach wird die Antwort des LLM verarbeitet und in ein JSON umgewandelt
     # 4) Parsen & Fallback
     try:
         json_file = json.loads(raw)
