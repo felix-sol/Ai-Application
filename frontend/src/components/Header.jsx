@@ -1,3 +1,5 @@
+/* reusable component for the header, contains h1 title and possible children Element*/
+
 function Header({ id, title, className, children }) {
   return (
     <header id={id} className={className}>

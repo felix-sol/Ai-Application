@@ -1,4 +1,5 @@
-/* src/ChatPage.css */
+/* complete style sheet for the ChatPage.js, adresses all elements created in HTML in the return statement.
+   covers responsive flexbox layout for the pdf viewer and the chat window components next to each other*/
 
 .chat-main {
   display: flex;
@@ -40,7 +41,7 @@
   border-radius: 5px;
   background-color: rgb(248, 247, 243);
 
-  /* Responsive Verhalten */
+  
   display: inline-block;          
   max-width: 100%;               
   white-space: nowrap;           

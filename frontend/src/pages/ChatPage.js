@@ -1,25 +1,30 @@
-// ChatPage.js
+/* Implements the Functionality of the second page of the frontend */
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Worker, Viewer } from '@react-pdf-viewer/core';
+import '@react-pdf-viewer/core/lib/styles/index.css';
+
+/* Imports the relevant styling */
 import './ChatPage.css';
 import Header from '../components/Header';
 import chatPageHeaderStyles from '../components/Header.module.css';
 import Footer from '../components/Footer';
 import chatPageFooterStyles from '../components/Footer.module.css';
-import { Worker, Viewer } from '@react-pdf-viewer/core';
-import '@react-pdf-viewer/core/lib/styles/index.css';
+
 
 function ChatPage() {
+  // State to manage chat messages, input field, and loading state
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const location = useLocation();
-  const pdfId = location.state?.pdfId || 'PDF-Chat'; // Dies ist der unique_filename
-  const displayFileName = location.state?.displayFileName || 'Unbekanntes Dokument'; // Dies ist der ursprüngliche Dateiname
-  const pdfUrl = location.state?.pdfUrl || null; // Die URL zum Anzeigen der PDF
+  const pdfId = location.state?.pdfId || 'PDF-Chat'; //  unique_filename
+  const displayFileName = location.state?.displayFileName || 'Unbekanntes Dokument'; // original file name of uploaded pdf
+  const pdfUrl = location.state?.pdfUrl || null; //  URL to PDF
 
+  // Handles input messages and sends them to the backend
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (input.trim() === '' || isLoading) return;
@@ -28,6 +33,7 @@ function ChatPage() {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
+    // Send the input message to chat endpoint
     try {
       const response = await fetch('http://localhost:5000/chat', {
         method: 'POST',
@@ -36,7 +42,7 @@ function ChatPage() {
         },
         body: JSON.stringify({
           question: input,
-          pdf_id: pdfId, // Wichtig: Hier unique_filename (pdfId) verwenden!
+          pdf_id: pdfId, 
         }),
       });
 
@@ -58,7 +64,7 @@ function ChatPage() {
 
   const handleExtractAndDownload = () => {
     const jsonResult = {
-      "name_of_the_doc": displayFileName, // ✅ HIER ANPASSEN: displayFileName verwenden
+      "name_of_the_doc": displayFileName, 
       "CO2": "…",
       "NOX": "…",
       "Number_of_Electric_Vehicles": "…",
@@ -84,6 +90,7 @@ function ChatPage() {
     link.click();
   };
 
+  /* Render the ChatPage, mainly contains all the visible Elements displayed on the ChatPage.js */
   return (
     <>
       <Header
@@ -100,7 +107,7 @@ function ChatPage() {
               <Viewer fileUrl={pdfUrl} />
             ) : (
               <div className="pdf-viewer-placeholder">
-                <p>PDF konnte nicht geladen werden oder ist nicht verfügbar.</p>
+                <p>Could not load document or PDF is not available.</p>
               </div>
             )}
           </Worker>
@@ -109,7 +116,7 @@ function ChatPage() {
         {/* Chat-Bereich */}
         <div className="chat-container">
           <div className="chat-window">
-            <h2 id="h2">{displayFileName}</h2> {/* ✅ Hier wird der Original-Dateiname angezeigt */}
+            <h2 id="h2">{displayFileName}</h2> 
 
             {messages.map((msg, index) => (
               <div key={index} className={`message ${msg.sender}`}>

@@ -1,3 +1,5 @@
+
+/* reusable component for the card, always comes with an image and h2 title and possible children content */
 import cover from '../assets/rocket.jpg';
 
 function Card({ className, imgClassName, title, children }) {

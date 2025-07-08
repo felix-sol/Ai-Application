@@ -1,3 +1,6 @@
+/* complete styling applied on the card  */
+
+/*  adjustment of whole element itself */
 .card {
   position: absolute;
   bottom: 0;
@@ -12,9 +15,10 @@
   overflow: hidden; /* verhindert Bildüberlauf */
   box-sizing: border-box;
   z-index: 0;
-  animation: rocketMove 12s linear infinite;
+  animation: rocketMove 12s linear infinite; /* Animation for moving up */
 }
 
+/* definition of animation */
 @keyframes rocketMove {
   0% {
     transform: translateY(0);
@@ -24,9 +28,10 @@
   }
 }
 
+/* scaling etc. for the image */
 .card img {
   width: 100%;         
-  height: auto;        /* Bewahrt Seitenverhältnis */
+  height: auto;        
   display: block;
   margin: 0;
   padding: 0;
@@ -34,6 +39,7 @@
   box-sizing: border-box;
 }
 
+/* customize h2 Element */
 .card h2 {
   font-size: clamp(1.1rem, 0.9vw, 1.3rem);
   font-family: Arial, sans-serif;
@@ -43,7 +49,7 @@
 }
 
  
-
+/* customize sentence shown as p tag */
 .card p {
   font-family: Arial, sans-serif;
   font-size: clamp(0.7rem, 0.8vw, 1rem);
@@ -52,6 +58,7 @@
   margin: 0.1em ;
 }
 
+/* styling ofchild created in the homepage.js, contains the names*/
 .card .names {
   font-family: Arial, sans-serif;
   font-size: clamp(0.7rem, 0.8vw, 1rem);

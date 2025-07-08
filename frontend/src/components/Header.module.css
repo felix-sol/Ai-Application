@@ -1,3 +1,5 @@
+/* Styling applied to the Header used in the HomePage.js */
+
 .header {
   position: relative; /* Damit z-index greift */
   z-index: 2; /* Höher als die content-box */
@@ -14,6 +16,8 @@
   font-size: clamp(1.5rem, 1.8vw, 2rem);
   margin: 0;
 }
+
+/* Styling applied to the Header used in the ChatPage.js */
 
 .chatPageHeader {
   display: flex;

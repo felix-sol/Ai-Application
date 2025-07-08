@@ -1,7 +1,9 @@
-// HomePage.js
+/* Implements the Functionality of the first page of the frontend */
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+/* Imports the relevant styling */
 import './HomePage.css';
 import Header from '../components/Header';
 import headerStyles from '../components/Header.module.css';
@@ -10,21 +12,22 @@ import footerStyles from '../components/Footer.module.css';
 import Card from '../components/Card';
 import cardStyles from '../components/Card.module.css';
 
+/* main entry point for the first page of the application */
 function HomePage() {
-  const navigate = useNavigate();
-  const [isUploading, setIsUploading] = useState(false);
+  const navigate = useNavigate(); // hook from react-router-dom to navigate to other pages
+  const [isUploading, setIsUploading] = useState(false); // State to manage the upload status
   
-
+  /* input of file activates this function and gives the pdf file to the backend at shown URL, then navigates to ChatPage.js  */
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file && file.type === 'application/pdf') {
       const formData = new FormData();
-      formData.append('pdf_file', file);
+      formData.append('pdf_file', file); // 'pdf_file' is the key expected by the backend
 
       setIsUploading(true);
       
       try {
-        const response = await fetch('http://localhost:5000/upload_pdf', {
+        const response = await fetch('http://localhost:5000/upload_pdf', {  // URL from the backend to upload the PDF file 
           method: 'POST',
           body: formData,
         });
@@ -33,12 +36,12 @@ function HomePage() {
 
         if (response.ok) {
           console.log('Upload erfolgreich:', data);
-          // ✅ HIER ANPASSEN: Übergebe pdf_id, filename und pdf_url
+          
           navigate('/chat', { 
             state: { 
-              pdfId: data.pdf_id, // Dies ist der unique_filename für die Backend-Kommunikation
-              displayFileName: data.filename, // Dies ist der ursprüngliche Dateiname für die Anzeige
-              pdfUrl: data.pdf_url // Die URL zum Anzeigen der PDF
+              pdfId: data.pdf_id, 
+              displayFileName: data.filename, // Filename of input PDF shown in Frontend
+              pdfUrl: data.pdf_url 
             } 
           });
         } else {
@@ -54,6 +57,8 @@ function HomePage() {
     }
   };
 
+
+ /* Render the HomePage, mainly contains all the visible Elements displayed on the HomePage.js */
   return (
     <>
       <Header
@@ -79,7 +84,7 @@ function HomePage() {
             {isUploading ? 'Uploading...' : 'Choose File'}
           </label>
 
-          {/* Spinner */}
+          {/* Spinner for loading animation */}
           {isUploading && <div className="spinner" />}
 
           <br />
