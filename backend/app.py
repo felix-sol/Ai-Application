@@ -176,7 +176,6 @@ def chat_with_pdf():
         print(f"Fehler bei der Kommunikation mit dem KI-Modell: {e}")
         traceback.print_exc()
         return jsonify({"error": f"Fehler bei der Kommunikation mit dem KI-Modell: {str(e)}"}), 500
-    
 # PDF und zugehörige ChromaDB-Sammlung löschen:
 @app.route('/delete_pdf/<pdf_id>', methods=['DELETE'])
 def delete_pdf(pdf_id):
