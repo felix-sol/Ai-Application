@@ -36,24 +36,25 @@ function HomePage() {
 
         if (response.ok) {
           console.log('Upload erfolgreich:', data);
-          
-          navigate('/chat', { 
-            state: { 
-              pdfId: data.pdf_id, 
-              displayFileName: data.filename, // Filename of input PDF shown in Frontend
-              pdfUrl: data.pdf_url 
-            } 
-          });
+          navigate('/chat', {
+            state: {
+              pdfId: data.pdf_id,                   
+              displayFileName: data.filename,  // Filename of input PDF shown in Frontend to display on ChatPage.js
+              pdfUrl: data.pdf_url,                
+              jsonUrl: data.json_url                
+            }
+        });
+
         } else {
-          alert('Upload fehlgeschlagen: ' + data.error);
+          alert('Upload failed: ' + data.error);
         }
       } catch (error) {
-        alert('Fehler beim Upload: ' + error.message);
+        alert('Error during upload: ' + error.message);
       } finally {
         setIsUploading(false);
       }
     } else {
-      alert('Bitte wählen Sie eine gültige PDF-Datei aus.');
+      alert('Please select a valid PDF file .');
     }
   };
 

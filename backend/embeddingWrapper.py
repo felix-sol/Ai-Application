@@ -11,10 +11,8 @@ class SAIAEmbeddings:
 
     # Method to generate embeddings for a list of text documents:
     def embed_documents(self, texts):
-        embeddings = []
-        # Iterate through each text document in the provided list.
-        for text in texts:
-            # Send a POST request to the SAIA Embedding service endpoint.
+        # Send a single POST request to the SAIA Embedding service endpoint for all texts at once.
+        try:
             response = requests.post(
                 self.endpoint,
                 # Set the necessary headers for authentication and content type.
@@ -22,18 +20,20 @@ class SAIAEmbeddings:
                     "Authorization": f"Bearer {self.api_key}", # API key for authentication.
                     "Content-Type": "application/json" # Indicate JSON request body.
                 },
-                # Provide the JSON payload with the input text, model, and encoding format.
+                # Provide the JSON payload with the input texts, model, and encoding format.
                 json={
-                    "input": text,
+                    "input": texts,  # ⬅️ Batch input instead of per-text call
                     "model": self.model,
                     "encoding_format": "float" # Request embeddings as float numbers.
                 }
             )
             # Raise an HTTPError for bad responses.
             response.raise_for_status()
-            embeddings.append(response.json()['data'][0]['embedding']) # 'data[0]['embedding']' is specific to the SAIA API response.
-        # Return the list of all generated embeddings.
-        return embeddings
+            # Extract embeddings from the response and return them as a list.
+            return [item['embedding'] for item in response.json()['data']] # List of embeddings for each input text.
+        except Exception as e:
+            print(f"Fehler beim Embedding: {e}")
+            raise
 
 
     # Method to generate an embedding for a single text query:

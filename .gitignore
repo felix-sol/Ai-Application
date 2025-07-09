@@ -20,3 +20,4 @@ env/
 backend/uploaded_pdfs/
 
 backend/chroma_db_data/
+backend/extracted_jsons/

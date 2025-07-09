@@ -1,5 +1,4 @@
 import os
-import json
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -53,57 +52,3 @@ def get_llm_response(user_question: str, system_prompt: str = "You are a helpful
     except Exception as e:
         print(f"Fehler bei der LLM-Anfrage: {e}")
         return "Entschuldigung, es gab ein Problem bei der Kommunikation mit dem KI-Modell."
-
-def extract_document_json(context: str) -> dict:
-    """
-    Nutzt get_llm_response, um aus dem übergebenen Kontext
-    ein JSON mit den Feldern name, CO2, NOX, Number_of_Electric_Vehicles,
-    Impact, Risks, Opportunities, Strategy, Actions,
-    Adopted_policies, Targets, KPIs und Timeline zu erzeugen.
-
-    Gibt das Ergebnis als Python-Dict zurück.
-    """
-    # 1) Leeres Schema definieren
-    schema = {
-        "name": "",
-        "CO2": "",
-        "NOX": "",
-        "Number_of_Electric_Vehicles": "",
-        "Impact": "",
-        "Risks": "",
-        "Opportunities": "",
-        "Strategy": "",
-        "Actions": "",
-        "Adopted_policies": "",
-        "Targets": "",
-        "KPIs": [],
-        "Timeline": ""
-    }
-
-    # 2) System-Prompt mit Schema
-    system_prompt = (
-        "Du bist ein JSON-Extraktor. Aus dem gelieferten Kontext:\n"
-        "- Ermittle den Dokumenttitel und setze 'name'.\n"
-        "- Extrahiere CO2, NOX, Number_of_Electric_Vehicles, Impact,\n"
-        "  Risks, Opportunities, Strategy, Actions,\n"
-        "  Adopted_policies, Targets, KPIs und Timeline.\n"
-        "Antworte **nur** mit gültigem JSON gemäß diesem Schema:\n"
-        f"{json.dumps(schema, ensure_ascii=False, indent=2)}"
-    )
-
-# Die funktion get LLM response wird verwendet um mit veränderten Parametern eine Anfrage an das LLM Modell zu schicken
-
-    # 3) Call ans LLM
-    raw = get_llm_response(
-        user_question="",
-        system_prompt=system_prompt,
-        context=context
-    )
-# Danach wird die Antwort des LLM verarbeitet und in ein JSON umgewandelt
-    # 4) Parsen & Fallback
-    try:
-        json_file = json.loads(raw)
-    except json.JSONDecodeError:
-        json_file = schema
-
-    return json_file

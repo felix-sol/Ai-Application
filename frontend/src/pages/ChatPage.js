@@ -21,8 +21,9 @@ function ChatPage() {
 
   const location = useLocation();
   const pdfId = location.state?.pdfId || 'PDF-Chat'; //  unique_filename
-  const displayFileName = location.state?.displayFileName || 'Unbekanntes Dokument'; // original file name of uploaded pdf
-  const pdfUrl = location.state?.pdfUrl || null; //  URL to PDF
+  const displayFileName = location.state?.displayFileName || 'Unknown Document'; //  The filename of the uploaded PDF, passed via location.state from HomePage.js using useNavigate after successful upload
+  // The original filename of the uploaded PDF, passed via location.state from HomePage.js using useNavigate after successful upload
+  const pdfUrl = location.state?.pdfUrl || null; //  URL to PDF in the backend
 
   // Handles input messages and sends them to the backend
   const handleSendMessage = async (e) => {
@@ -49,12 +50,12 @@ function ChatPage() {
       const data = await response.json();
 
       const botResponse = {
-        text: response.ok ? data.answer : data.error || "Fehler beim Chatten.",
+        text: response.ok ? data.answer : data.error || "Error while chatting.",
         sender: 'bot',
       };
       setMessages(prev => [...prev, botResponse]);
     } catch (error) {
-      const botResponse = { text: 'Netzwerkfehler: ' + error.message, sender: 'bot' };
+      const botResponse = { text: 'Network error: ' + error.message, sender: 'bot' };
       setMessages(prev => [...prev, botResponse]);
     } finally {
       setIsLoading(false);
@@ -62,33 +63,35 @@ function ChatPage() {
     }
   };
 
-  const handleExtractAndDownload = () => {
-    const jsonResult = {
-      "name_of_the_doc": displayFileName, 
-      "CO2": "…",
-      "NOX": "…",
-      "Number_of_Electric_Vehicles": "…",
-      "Impact": "…",
-      "Risks": "…",
-      "Opportunities": "…",
-      "Strategy": "…",
-      "Actions": "…",
-      "Adopted_policies": "…",
-      "Targets": "…"
-    };
+   const handleExtractAndDownload = async () => {
+    if (!location.state?.jsonUrl) {
+      alert("JSON URL nicht verfügbar.");
+      return;
+    }
 
-    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
-      JSON.stringify(jsonResult, null, 2)
-    )}`;
-    const link = document.createElement('a');
-    link.href = jsonString;
-    // Der Dateiname für den Download sollte vom ursprünglichen Dateinamen abgeleitet werden.
-    // Das ".split('.')[0]" ist nicht ganz robust bei Dateinamen mit mehreren Punkten.
-    // Besser wäre es, die Dateiendung korrekt zu entfernen:
-    const downloadFileNameWithoutExtension = displayFileName.split('.').slice(0, -1).join('.');
-    link.download = `${downloadFileNameWithoutExtension}-analyse.json`;
-    link.click();
+    try {
+      const response = await fetch(location.state.jsonUrl);
+      if (!response.ok) {
+        throw new Error(`Fehler beim Abrufen der JSON-Datei: ${response.statusText}`);
+      }
+
+      const jsonData = await response.json();
+      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+        JSON.stringify(jsonData, null, 2)
+      )}`;
+
+      const link = document.createElement('a');
+      link.href = jsonString;
+
+      const downloadFileNameWithoutExtension = displayFileName.split('.').slice(0, -1).join('.');
+      link.download = `${downloadFileNameWithoutExtension}-analyse.json`;
+      link.click();
+    } catch (error) {
+      console.error("Fehler beim Herunterladen der JSON-Datei:", error);
+      alert("Fehler beim Herunterladen der JSON-Datei.");
+    }
   };
+
 
   /* Render the ChatPage, mainly contains all the visible Elements displayed on the ChatPage.js */
   return (

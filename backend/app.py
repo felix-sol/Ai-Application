@@ -3,6 +3,8 @@
 #import sys
 #sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
+import re
+import json
 import traceback # For detailed stack traces (error information).
 from flask import Flask, request, jsonify, send_from_directory # Flask core modules for web applications.
 from dotenv import load_dotenv # Loading environment variables from .env file.
@@ -130,6 +132,9 @@ def serve_pdf(filename):
     # send_from_directory is used for securely serving files from a specific folder.
     return send_from_directory(UPLOAD_FOLDER, filename)         
 
+@app.route('/static_jsons/<filename>')
+def download_json(filename):
+    return send_from_directory(JSON_OUTPUT_FOLDER, filename, as_attachment=True)
 
 # Route for uploading and processing PDF files:
 @app.route('/upload_pdf', methods=['POST'])
@@ -178,14 +183,66 @@ def upload_pdf():
                 os.remove(file_path)
                 return jsonify({"error": f"Failed to process PDF for search: {str(e)}"}), 500
 
-            # 8. Return successful response.
+            # 8. prepare the JSON schema for the LLM response:
+            json_fields_prompt = (
+                "Extrahiere die folgenden Informationen aus dem bereitgestellten Text. "
+                "Gib sie im folgenden JSON-Format zurück:\n\n"
+                '{\n'
+                '  "name_of_the_doc": "",\n'
+                '  "CO2": "",\n'
+                '  "NOX": "",\n'
+                '  "Number_of_Electric_Vehicles": "",\n'
+                '  "Impact": "",\n'
+                '  "Risks": "",\n'
+                '  "Opportunities": "",\n'
+                '  "Strategy": "",\n'
+                '  "Actions": "",\n'
+                '  "Adopted_policies": "",\n'
+                '  "Targets": ""\n'
+                '}\n\n'
+                "Fülle alle Felder basierend auf dem folgenden Kontext so vollständig wie möglich aus:"
+            )
+
+            # 9. Generate JSON data using the LLM based on the PDF content.
+            llm_json_response = get_llm_response(
+                user_question="Erzeuge JSON-Daten gemäß obigem Schema.",
+                system_prompt=json_fields_prompt,
+                context=full_pdf_text
+            )
+
+            # 10. Validate the LLM response:
+            match = re.search(r'{.*}', llm_json_response, re.DOTALL)
+            if not match:
+                print("Kein gültiger JSON-Block in der LLM-Antwort gefunden.")
+                return jsonify({"error": "Invalid JSON extracted from LLM response."}), 500
+
+            json_string = match.group(0)
+
+            try:
+                json.loads(json_string)
+            except json.JSONDecodeError as e:
+                print(f"Fehler beim Parsen der JSON-Antwort: {e}")
+                return jsonify({"error": "Generated JSON is invalid."}), 500
+
+            # 11. Save the JSON data to a file:
+            json_output_path = os.path.join(JSON_OUTPUT_FOLDER, unique_filename.replace('.pdf', '.json'))
+            try:
+                with open(json_output_path, 'w', encoding='utf-8') as f:
+                    f.write(json_string)
+            except Exception as e:
+                print(f"Fehler beim Speichern der JSON-Datei: {e}")
+                traceback.print_exc()
+            
+            # 12. Return success response with URLs to the PDF and JSON files:
             return jsonify({
-                "message": "PDF uploaded, processed and embedded", # Success message for the frontend.
-                "filename": pdf_file.filename, # Original filename.
-                "pdf_url": f"http://localhost:5000/static_pdfs/{unique_filename}" # URL for direct access to the PDF.
-            }), 200 # (OK)
+             "message": "PDF uploaded, processed and embedded",
+             "filename": pdf_file.filename,
+             "pdf_url": f"http://localhost:5000/static_pdfs/{unique_filename}",
+             "json_url": f"http://localhost:5000/static_jsons/{unique_filename.replace('.pdf', '.json')}",
+            "pdf_id": unique_filename  
+        }), 200
+
         except Exception as e:
-            # 9. General error handling for the file processing process.
             print(f"Server error during PDF processing: {e}")
             traceback.print_exc()
             return jsonify({"error": f"Server error during PDF processing: {str(e)}"}), 500
@@ -221,7 +278,7 @@ def chat_with_pdf():
 
     # 6. Checking for empty context:
     if not context_for_llm.strip():
-        return jsonify({"answer": "Leider konnte ich im Dokument keine relevanten Informationen zu Ihrer Frage finden."}), 200
+        return jsonify({"answer": "Unfortunately I could not find any answers regarding your question."}), 200
 
     # 7. Shorten context if necessary:
     if len(context_for_llm) > MAX_CONTEXT_CHAR_LIMIT:
@@ -395,3 +452,4 @@ if __name__ == '__main__':
     print("Starting Flask backend server...")
     # debug=True: Activates debug mode (automatic reload on code changes, detailed errors).
     app.run(host="127.0.0.1", port=5000, debug=True)
+    
