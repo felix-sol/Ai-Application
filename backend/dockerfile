@@ -1,20 +1,22 @@
-# Verwende ein offizielles Python-Image als Basis. Wir wechseln auf 3.11, da 3.10 zu alt für numpy==2.3.1 ist.
+# Use an official Python image as the base.
 FROM python:3.11-slim-buster
 
-# Setze das Arbeitsverzeichnis im Container. Hier werden deine App-Dateien abgelegt.
+# Set the working directory inside the container.
 WORKDIR /app/backend
 
-# Kopiere die requirements.txt in das Arbeitsverzeichnis des Containers
+# Copy the requirements.txt file into the container's working directory.
 COPY requirements.txt .
 
-# Installiere die Python-Abhängigkeiten
+# Install Python dependencies listed in requirements.txt.
+# --no-cache-dir prevents pip from storing build artifacts, reducing image size.
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Kopiere den Rest deines Backend-Codes in das Arbeitsverzeichnis
+# Copy the rest of the backend application code into the working directory.
+# The first '.' refers to the current directory on the host, the second '.' to the WORKDIR in the container.
 COPY . .
 
-# Exponiere den Port, auf dem deine Flask-App läuft (standardmäßig 5000)
+# Expose port 5000, which is the default port for Flask applications.
 EXPOSE 5000
 
-# Definiere den Befehl, der ausgeführt wird, wenn der Container startet
+# Define the command that will be executed when the container starts.
 CMD ["python", "app.py"]
