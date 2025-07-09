@@ -1,7 +1,7 @@
-# "Monkey-patching" to ensure that ChromaDB uses the 'pysqlite3' library instead of Python's standard 'sqlite3' library. For compatibility:
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# "Monkey-patching" to ensure that ChromaDB uses the 'pysqlite3' library instead of Python's standard 'sqlite3' library. For compatibility with Docker/WSL (commented out, because it´s not necessary for now):
+# __import__('pysqlite3')
+#import sys
+#sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 import traceback # For detailed stack traces (error information).
 from flask import Flask, request, jsonify, send_from_directory # Flask core modules for web applications.
