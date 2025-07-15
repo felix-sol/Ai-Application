@@ -63,29 +63,31 @@ function ChatPage() {
     }
   };
 
+  // Handles the extraction and download of key values from the JSON file
+  // It fetches the JSON file from the URL provided in location.state.jsonUrl
    const handleExtractAndDownload = async () => {
     if (!location.state?.jsonUrl) {
-      alert("JSON URL nicht verfügbar.");
+      alert("JSON URL not available.");
       return;
     }
 
     try {
       const response = await fetch(location.state.jsonUrl);
       if (!response.ok) {
-        throw new Error(`Fehler beim Abrufen der JSON-Datei: ${response.statusText}`);
+        throw new Error(`Error while fetching JSON-File: ${response.statusText}`);
       }
 
-      const jsonData = await response.json();
-      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
-        JSON.stringify(jsonData, null, 2)
-      )}`;
+      const jsonData = await response.json(); 
+      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(  
+        JSON.stringify(jsonData, null, 2) 
+      )}`;  // JSON-Daten in einen String umwandeln
 
-      const link = document.createElement('a');
+      const link = document.createElement('a'); 
       link.href = jsonString;
 
-      const downloadFileNameWithoutExtension = displayFileName.split('.').slice(0, -1).join('.');
+      const downloadFileNameWithoutExtension = displayFileName.split('.').slice(0, -1).join('.'); 
       link.download = `${downloadFileNameWithoutExtension}-analyse.json`;
-      link.click();
+      link.click(); 
     } catch (error) {
       console.error("Fehler beim Herunterladen der JSON-Datei:", error);
       alert("Fehler beim Herunterladen der JSON-Datei.");
@@ -143,7 +145,7 @@ function ChatPage() {
               disabled={isLoading}
             />
             <button type="submit" disabled={isLoading}>Send</button>
-            <button type="button" onClick={handleExtractAndDownload} disabled={isLoading}>
+            <button type="button" onClick={handleExtractAndDownload}>
               Download Key Values
             </button>
           </form>

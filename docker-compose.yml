@@ -23,3 +23,11 @@ services:
       - SAIA_API_KEY=${SAIA_API_KEY}
     # Neustart-Richtlinie: Startet den Container automatisch neu, falls er unerwartet stoppt
     restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    restart: unless-stopped
