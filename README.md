@@ -42,6 +42,8 @@ Create a .env file in the root directory like the .env.example file (next to doc
 Use Docker to deploy the project:
 docker compose -f "docker-compose.yml" up -d --build
 This works the same on Windows and macOS (Tested with Docker Desktop using the "Run All Services" button).
+The app runs on **http://localhost:3000/**
+
 
 
 ## 🛠 Troubleshooting (Manual Installation)
@@ -66,7 +68,11 @@ npm install @react-pdf-viewer/default-layout
 npm install react-router-dom
 npm install @testing-library/dom
 
+The start commands for the manual start are **python app.py** in the terminal of the backend and 
+**npm start** in the terminal of the frontend
+
 ## Usage
+The app is running on http://localhost:3000/
 Once running, the app allows users to:
 
 Upload a sustainability report in PDF format.
