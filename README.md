@@ -72,7 +72,6 @@ The start commands for the manual start are **python app.py** in the terminal of
 **npm start** in the terminal of the frontend
 
 ## Usage
-The app is running on http://localhost:3000/
 Once running, the app allows users to:
 
 Upload a sustainability report in PDF format.
