@@ -186,7 +186,7 @@ def upload_pdf():
             # 8. prepare the JSON schema for the LLM response:
             json_fields_prompt = (
                 "Extrahiere die folgenden Informationen aus dem bereitgestellten Text. "
-                "Gib sie im folgenden JSON-Format zurück:\n\n"
+                "Gib die Ergebnisse im folgenden JSON-Format zurück:\n\n"
                 '{\n'
                 '  "name_of_the_doc": "",\n'
                 '  "CO2": "",\n'
@@ -200,7 +200,7 @@ def upload_pdf():
                 '  "Adopted_policies": "",\n'
                 '  "Targets": ""\n'
                 '}\n\n'
-                "Fülle alle Felder basierend auf dem folgenden Kontext so vollständig wie möglich aus:"
+                "Fülle alle Felder basierend auf dem folgenden Kontext so vollständig wie möglich aus."
             )
 
             # 9. Generate JSON data using the LLM based on the PDF content.

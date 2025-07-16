@@ -1,22 +1,44 @@
-# Use an official Python image as the base.
-FROM python:3.11-slim-buster
+FROM python:3.11-slim-bookworm
 
-# Set the working directory inside the container.
+# Systemtools und Build-Abhängigkeiten installieren
+RUN apt-get update && apt-get install -y \
+    wget \
+    build-essential \
+    libreadline-dev \
+    libsqlite3-dev \
+    sqlite3 \
+    gcc \
+    make \
+    zlib1g-dev \
+    && apt-get clean
+
+# Neueste SQLite-Version installieren (>=3.35 nötig für Chroma)
+WORKDIR /opt
+RUN wget https://www.sqlite.org/2023/sqlite-autoconf-3430000.tar.gz && \
+    tar xzf sqlite-autoconf-3430000.tar.gz && \
+    cd sqlite-autoconf-3430000 && \
+    ./configure --prefix=/usr/local && \
+    make -j$(nproc) && \
+    make install
+
+# Prüfen, dass neue Version verwendet wird (Optional)
+RUN sqlite3 --version
+
+# Setze LD_LIBRARY_PATH, damit Python die richtige SQLite-Version nutzt
+ENV LD_LIBRARY_PATH="/usr/local/lib"
+
+# Arbeitsverzeichnis setzen
 WORKDIR /app/backend
 
-# Copy the requirements.txt file into the container's working directory.
+# Abhängigkeiten installieren
 COPY requirements.txt .
-
-# Install Python dependencies listed in requirements.txt.
-# --no-cache-dir prevents pip from storing build artifacts, reducing image size.
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the backend application code into the working directory.
-# The first '.' refers to the current directory on the host, the second '.' to the WORKDIR in the container.
+# Backend-Code kopieren
 COPY . .
 
-# Expose port 5000, which is the default port for Flask applications.
+# Port für Flask
 EXPOSE 5000
 
-# Define the command that will be executed when the container starts.
+# App starten
 CMD ["python", "app.py"]

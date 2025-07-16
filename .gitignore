@@ -9,14 +9,14 @@ venv/
 .venv/
 env/
 
-# Umgebungsvariablen-Datei (sehr wichtig!)
+# Umgebungsvariablen-Datei 
 .env
 
-# Spezifische IDE-Dateien (optional, aber empfohlen)
+# Spezifische IDE-Dateien 
 .vscode/
 .idea/
 
-# Uploads (wie dein uploaded_pdfs)
+# Uploads 
 backend/uploaded_pdfs/
 
 backend/chroma_db_data/
