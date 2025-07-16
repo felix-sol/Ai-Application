@@ -188,7 +188,7 @@ def upload_pdf():
                 "Extrahiere die folgenden Informationen aus dem bereitgestellten Text. "
                 "Gib die Ergebnisse im folgenden JSON-Format zurück:\n\n"
                 '{\n'
-                '  "name_of_the_doc": "",\n'
+                '  "name": "",\n'
                 '  "CO2": "",\n'
                 '  "NOX": "",\n'
                 '  "Number_of_Electric_Vehicles": "",\n'
@@ -451,5 +451,5 @@ def delete_all_data():
 if __name__ == '__main__':
     print("Starting Flask backend server...")
     # debug=True: Activates debug mode (automatic reload on code changes, detailed errors).
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
     
